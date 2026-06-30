@@ -1,0 +1,322 @@
+.setup-page {
+  min-height: 100vh;
+  display: flex;
+}
+
+/* Left panel — form */
+.setup-form-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 5rem;
+  background-color: #f8fafc;
+  min-height: 100vh;
+}
+
+.setup-form-box {
+  width: 100%;
+  max-width: 420px;
+}
+
+.setup-title {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.setup-subtitle {
+  font-size: 0.9rem;
+  color: #64748b;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.setup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.setup-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.setup-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.setup-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.setup-input,
+.setup-select {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  font-size: 1rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 0.75rem;
+  background-color: #ffffff;
+  color: #0f172a;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  outline: none;
+  appearance: none;
+}
+
+.setup-input::placeholder {
+  color: #94a3b8;
+}
+
+.setup-input:hover,
+.setup-select:hover {
+  border-color: #cbd5e1;
+}
+
+.setup-input:focus,
+.setup-select:focus {
+  border-color: #f97316;
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
+}
+
+.setup-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.setup-btn {
+  width: 100%;
+  padding: 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #ffffff;
+  background-color: #f97316;
+  border: none;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: background-color 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.setup-btn:hover {
+  background-color: #ea6c0a;
+}
+
+.setup-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.setup-skip {
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #94a3b8;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.15s;
+  text-align: center;
+}
+
+.setup-skip:hover {
+  color: #64748b;
+}
+
+.setup-error {
+  font-size: 0.875rem;
+  color: #dc2626;
+  background-color: #fef2f2;
+  border: 1px solid #fee2e2;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+}
+
+/* Right panel — branding */
+.setup-brand-panel {
+  display: none;
+  width: 50%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  background-color: #0f172a;
+  padding: 2.5rem 3rem;
+  min-height: 100vh;
+}
+
+@media (min-width: 1024px) {
+  .setup-brand-panel {
+    display: flex;
+  }
+}
+
+.setup-brand-glow-bottom {
+  position: absolute;
+  bottom: -8rem;
+  right: -8rem;
+  width: 500px;
+  height: 500px;
+  border-radius: 50%;
+  background: rgba(249, 115, 22, 0.08);
+  filter: blur(80px);
+  pointer-events: none;
+}
+
+.setup-brand-glow-top {
+  position: absolute;
+  top: -5rem;
+  left: -5rem;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: rgba(249, 115, 22, 0.04);
+  filter: blur(60px);
+  pointer-events: none;
+}
+
+.setup-brand-logo {
+  position: absolute;
+  top: 2.5rem;
+  left: 3rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  z-index: 10;
+}
+
+.setup-brand-logo-icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  background-color: #f97316;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 900;
+  font-size: 0.875rem;
+}
+
+.setup-brand-logo-name {
+  color: #fff;
+  font-weight: 600;
+  font-size: 1.125rem;
+  letter-spacing: 0.05em;
+}
+
+.setup-brand-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 2.5rem;
+  z-index: 10;
+}
+
+.setup-brand-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 100%;
+  max-width: 280px;
+}
+
+.setup-brand-step {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  text-align: left;
+}
+
+.setup-brand-step-num {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background-color: #f97316;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.setup-brand-step-num.done {
+  background-color: #22c55e;
+}
+
+.setup-brand-step-num.active {
+  background-color: #f97316;
+  box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.2);
+}
+
+.setup-brand-step-num.pending {
+  background-color: #1e293b;
+  border: 1.5px solid #334155;
+  color: #475569;
+}
+
+.setup-brand-step-text strong {
+  display: block;
+  color: #f1f5f9;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.setup-brand-step-text span {
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
+.setup-brand-tagline {
+  text-align: center;
+}
+
+.setup-brand-tagline h2 {
+  font-size: 2.25rem;
+  font-weight: 900;
+  color: #fff;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.75rem;
+}
+
+.setup-brand-tagline h2 span {
+  color: #f97316;
+}
+
+.setup-brand-tagline p {
+  color: #94a3b8;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.setup-brand-quote {
+  position: absolute;
+  bottom: 2.5rem;
+  left: 3rem;
+  right: 3rem;
+  text-align: center;
+  color: #475569;
+  font-size: 0.875rem;
+  font-style: italic;
+  z-index: 10;
+}

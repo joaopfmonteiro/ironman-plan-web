@@ -1,0 +1,341 @@
+.wp {
+  padding: 2rem;
+  max-width: 1100px;
+}
+
+.wp__title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 1.5rem;
+}
+
+.wp-loading {
+  padding: 3rem;
+  text-align: center;
+  color: #94a3b8;
+}
+
+/* Stats row */
+.wp-stats {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.wp-stat {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  padding: 1rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 130px;
+}
+
+.wp-stat--hint {
+  border-style: dashed;
+}
+
+.wp-stat__label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.wp-stat__value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.wp-stat__sub {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.wp-stat__badge {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  display: inline-block;
+  margin-top: 0.1rem;
+}
+
+.bmi--low    { background: #dbeafe; color: #1d4ed8; }
+.bmi--normal { background: #dcfce7; color: #166534; }
+.bmi--over   { background: #fef9c3; color: #854d0e; }
+.bmi--obese1 { background: #fed7aa; color: #9a3412; }
+.bmi--obese2,
+.bmi--obese3 { background: #fee2e2; color: #991b1b; }
+
+/* Chart card */
+.wp-chart-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.wp-chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.wp-chart-label {
+  font-weight: 600;
+  color: #0f172a;
+  font-size: 0.95rem;
+}
+
+.wp-chart-svg {
+  width: 100%;
+  display: block;
+}
+
+/* Period tabs (reused from dashboard) */
+.weight-period-tabs {
+  display: flex;
+  gap: 0.2rem;
+  background-color: #f8fafc;
+  border-radius: 0.5rem;
+  padding: 0.2rem;
+  border: 1px solid #e2e8f0;
+}
+
+.weight-period-tab {
+  padding: 0.25rem 0.7rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #64748b;
+  background: none;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.weight-period-tab:hover { color: #0f172a; }
+
+.weight-period-tab--active {
+  background-color: #fff;
+  color: #f97316;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.weight-x-tick text { font-family: inherit; }
+
+@media (max-width: 640px) {
+  .weight-x-tick text { display: none; }
+}
+
+/* Bottom layout */
+.wp-bottom {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 700px) {
+  .wp-bottom { grid-template-columns: 1fr; }
+}
+
+/* Add card */
+.wp-add-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+}
+
+.wp-add-card__title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 1rem;
+}
+
+.wp-add-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.wp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.wp-field__label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.wp-field__input {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  outline: none;
+  background: #f8fafc;
+  color: #0f172a;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.wp-field__input:focus {
+  border-color: #f97316;
+  box-shadow: 0 0 0 3px rgba(249,115,22,0.12);
+  background: #fff;
+}
+
+.wp-btn {
+  padding: 0.6rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #fff;
+  background-color: #f97316;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.15s;
+  white-space: nowrap;
+}
+
+.wp-btn:hover:not(:disabled) { background-color: #ea6c0a; }
+.wp-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.wp-btn--secondary {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.wp-btn--secondary:hover:not(:disabled) { background: #e2e8f0; }
+
+/* Table card */
+.wp-table-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  overflow: hidden;
+}
+
+.wp-table-card__title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 1rem;
+}
+
+.wp-empty {
+  color: #94a3b8;
+  font-size: 0.875rem;
+}
+
+.wp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.wp-table th {
+  text-align: left;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0 0.75rem 0.6rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.wp-table td {
+  padding: 0.65rem 0.75rem;
+  color: #334155;
+  border-bottom: 1px solid #f8fafc;
+}
+
+.wp-table tbody tr:last-child td { border-bottom: none; }
+
+.wp-table tbody tr:hover td { background: #fafafa; }
+
+.wp-table__weight {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.wp-table__actions {
+  display: flex;
+  gap: 0.4rem;
+  justify-content: flex-end;
+}
+
+.wp-action {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0.2rem 0.3rem;
+  border-radius: 0.3rem;
+  opacity: 0.6;
+  transition: opacity 0.15s, background 0.15s;
+}
+
+.wp-action:hover { opacity: 1; background: #f1f5f9; }
+
+/* BMI pill in table */
+.wp-bmi-pill {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  display: inline-block;
+}
+
+/* Edit modal */
+.wp-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.wp-modal {
+  background: #fff;
+  border-radius: 0.75rem;
+  padding: 1.75rem;
+  width: 320px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+}
+
+.wp-modal__title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 1.25rem;
+}
+
+.wp-modal__actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+}

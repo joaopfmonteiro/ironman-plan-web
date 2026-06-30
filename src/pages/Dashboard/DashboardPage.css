@@ -1,0 +1,363 @@
+.dashboard-page {
+  padding: 2rem;
+}
+
+/* Header */
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+}
+
+.dashboard-header-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.dashboard-header-subtitle {
+  color: #64748b;
+  margin-top: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.dashboard-profile-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+}
+
+.dashboard-profile-name {
+  display: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #475569;
+  transition: color 0.15s;
+}
+
+.dashboard-profile-link:hover .dashboard-profile-name {
+  color: #f97316;
+}
+
+@media (min-width: 640px) {
+  .dashboard-profile-name {
+    display: block;
+  }
+}
+
+.dashboard-profile-avatar {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+  background-color: #f97316;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.875rem;
+  transition: background-color 0.15s;
+}
+
+.dashboard-profile-link:hover .dashboard-profile-avatar {
+  background-color: #ea6c0a;
+}
+
+/* Loading */
+.dashboard-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 10rem;
+}
+
+.dashboard-spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 4px solid #3b82f6;
+  border-top-color: transparent;
+  border-radius: 9999px;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Stats grid */
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+@media (min-width: 1024px) {
+  .dashboard-stats {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.stat-card {
+  background-color: #fff;
+  border-radius: 0.75rem;
+  border: 1px solid #e2e8f0;
+  padding: 1.25rem;
+}
+
+.stat-card__label {
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.stat-card__value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-top: 0.25rem;
+}
+
+.stat-card__sub {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin-top: 0.25rem;
+}
+
+/* Two-column section grid */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Generic card */
+.dashboard-card {
+  background-color: #fff;
+  border-radius: 0.75rem;
+  border: 1px solid #e2e8f0;
+  padding: 1.5rem;
+}
+
+.dashboard-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.dashboard-card__title {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.dashboard-card__link {
+  font-size: 0.875rem;
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.dashboard-card__link:hover {
+  text-decoration: underline;
+}
+
+/* Active plan */
+.active-plan-link {
+  display: block;
+  text-decoration: none;
+}
+
+.active-plan-box {
+  padding: 1rem;
+  background-color: #eff6ff;
+  border-radius: 0.75rem;
+  border: 1px solid #dbeafe;
+  transition: border-color 0.15s;
+}
+
+.active-plan-box:hover {
+  border-color: #93c5fd;
+}
+
+.active-plan-box__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.active-plan-box__name {
+  font-weight: 600;
+  color: #0f172a;
+  transition: color 0.15s;
+}
+
+.active-plan-link:hover .active-plan-box__name {
+  color: #1d4ed8;
+}
+
+.active-plan-box__desc {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-top: 0.25rem;
+}
+
+.active-plan-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.active-plan-meta__label {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.active-plan-meta__value {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #334155;
+}
+
+.active-plan-divider {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #dbeafe;
+}
+
+/* Empty state */
+.dashboard-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 8rem;
+  text-align: center;
+}
+
+.dashboard-empty__text {
+  font-size: 0.875rem;
+  color: #94a3b8;
+}
+
+.dashboard-empty__link {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.dashboard-empty__link:hover {
+  text-decoration: underline;
+}
+
+/* Races list */
+.races-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.race-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  background-color: #f8fafc;
+  transition: background-color 0.15s;
+}
+
+.race-item:hover {
+  background-color: #f1f5f9;
+}
+
+.race-item__name {
+  font-weight: 500;
+  color: #0f172a;
+  font-size: 0.875rem;
+}
+
+.race-item__meta {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin-top: 0.125rem;
+}
+
+/* All plans card */
+.dashboard-all-plans {
+  margin-top: 1.5rem;
+  background-color: #fff;
+  border-radius: 0.75rem;
+  border: 1px solid #e2e8f0;
+  padding: 1.5rem;
+}
+
+/* Plans list */
+.plans-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.plan-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  text-decoration: none;
+  transition: background-color 0.15s;
+}
+
+.plan-item:hover {
+  background-color: #f8fafc;
+}
+
+.plan-item__left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.plan-item__dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+
+.plan-item__dot--active {
+  background-color: #22c55e;
+}
+
+.plan-item__dot--inactive {
+  background-color: #cbd5e1;
+}
+
+.plan-item__name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #334155;
+  transition: color 0.15s;
+}
+
+.plan-item:hover .plan-item__name {
+  color: #1d4ed8;
+}
+
+.plan-item__right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
