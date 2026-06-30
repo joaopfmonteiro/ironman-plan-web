@@ -121,5 +121,6 @@ export function CreatePlanModal({ open, races, onClose, onCreated }: Props) {
         </form>
       </div>
     </div>
-  )
+
+)
 }
