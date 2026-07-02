@@ -170,7 +170,14 @@ export function WeightPage() {
   const range = maxKg - minKg
   const yTicks = Array.from({ length: 5 }, (_, i) => minKg + (range / 4) * i)
 
-  const points   = entries.map((e) => ({ x: dateToX(e.date, startMs, endMs), y: toY(e.weightKg, minKg, range), entry: e }))
+  // Extend line to today if last entry is in the past
+  const todayStr = new Date().toISOString().slice(0, 10)
+  const lastEntry = entries[entries.length - 1]
+  const chartEntries = entries.length > 0 && lastEntry.date < todayStr
+    ? [...entries, { ...lastEntry, date: todayStr, id: -1 }]
+    : entries
+
+  const points   = chartEntries.map((e) => ({ x: dateToX(e.date, startMs, endMs), y: toY(e.weightKg, minKg, range), entry: e }))
   const polyline = points.map((p) => `${p.x},${p.y}`).join(' ')
   const xTicks   = generateXTicks(periodStart, periodEnd, period)
 
@@ -262,7 +269,7 @@ export function WeightPage() {
             <polyline points={polyline} fill="none" stroke="#f97316"
               strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
           )}
-          {points.map((p) => (
+          {points.filter(p => p.entry.id !== -1).map((p) => (
             <circle key={p.entry.id} cx={p.x} cy={p.y} r="4"
               fill="#fff" stroke="#f97316" strokeWidth="2.5">
               <title>{p.entry.weightKg} kg — {p.entry.date}</title>
