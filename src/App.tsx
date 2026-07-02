@@ -11,6 +11,7 @@ import { PlanDetailPage } from './pages/PlanDetail'
 import { RacesPage } from './pages/Races'
 import { TemplatesPage } from './pages/Templates'
 import { WeightPage } from './pages/Weight'
+import { ProgressPage } from './pages/Progress'
 
 function ProtectedLayout() {
   return (
@@ -38,6 +39,7 @@ export default function App() {
           <Route path="/races" element={<RacesPage />} />
           <Route path="/templates" element={<TemplatesPage />} />
           <Route path="/weight" element={<WeightPage />} />
+          <Route path="/progress" element={<ProgressPage />} />
         </Route>
 
         {/* Fallback */}

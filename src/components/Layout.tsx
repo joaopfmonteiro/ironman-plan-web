@@ -48,6 +48,15 @@ const navItems = [
       </svg>
     ),
   },
+  {
+    to: '/progress',
+    label: 'Evolução',
+    icon: (
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+      </svg>
+    ),
+  },
 ]
 
 export function Layout() {
@@ -65,9 +74,9 @@ export function Layout() {
       <nav className="app-nav">
         {/* Logo */}
         <Link to="/dashboard" className="app-nav-logo">
-          <div className="app-nav-logo-icon">IM</div>
+          <div className="app-nav-logo-icon">VK</div>
           <div>
-            <div className="app-nav-logo-name">IronPlan</div>
+            <div className="app-nav-logo-name">Vokaro</div>
             <div className="app-nav-logo-sub">Training Manager</div>
           </div>
         </Link>
