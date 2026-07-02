@@ -1,0 +1,278 @@
+.svm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 1rem;
+}
+
+.svm-modal {
+  background: #fff;
+  border-radius: 1rem;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+/* Header */
+.svm-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.svm-header-icon {
+  font-size: 2rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.svm-header-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.svm-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.svm-subtitle {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  margin: 0.15rem 0 0;
+}
+
+.svm-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #94a3b8;
+  padding: 0.25rem;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.svm-close:hover {
+  color: #475569;
+  background: #f1f5f9;
+}
+
+/* Body */
+.svm-body {
+  flex: 1;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.svm-meta-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.svm-date {
+  font-size: 0.85rem;
+  color: #475569;
+  flex: 1;
+  min-width: 0;
+}
+
+.svm-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: 99px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.svm-badge--zone {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.svm-badge--strength {
+  background: #ede9fe;
+  color: #7c3aed;
+}
+
+.svm-badge--done {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+/* Stats */
+.svm-stats {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.svm-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  min-width: 100px;
+}
+
+.svm-stat__label {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.svm-stat__value {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* Sections */
+.svm-section__label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 0.6rem;
+}
+
+.svm-description {
+  font-size: 0.9rem;
+  color: #334155;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Exercises table */
+.svm-exercises {
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  font-size: 0.875rem;
+}
+
+.svm-ex-header {
+  display: grid;
+  grid-template-columns: 1fr 4rem 4rem 5rem;
+  background: #f8fafc;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.svm-ex-row {
+  display: grid;
+  grid-template-columns: 1fr 4rem 4rem 5rem;
+  padding: 0.6rem 0.75rem;
+  color: #334155;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.svm-ex-row:last-child {
+  border-bottom: none;
+}
+
+.svm-ex-name {
+  font-weight: 500;
+}
+
+/* Result section */
+.svm-section--result {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 0.75rem;
+  padding: 1rem;
+}
+
+.svm-section--result .svm-section__label {
+  color: #15803d;
+}
+
+.svm-section--result .svm-stat {
+  background: #fff;
+  border-color: #bbf7d0;
+}
+
+.svm-result-notes {
+  font-size: 0.875rem;
+  color: #166534;
+  margin: 0.75rem 0 0;
+  font-style: italic;
+}
+
+/* Footer */
+.svm-footer {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.svm-btn {
+  flex: 1;
+  padding: 0.75rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.svm-btn--secondary {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.svm-btn--secondary:hover {
+  background: #e2e8f0;
+}
+
+.svm-btn--ghost {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.svm-btn--ghost:hover {
+  background: #e2e8f0;
+}
+
+.svm-btn--primary {
+  background: #f97316;
+  color: #fff;
+}
+
+.svm-btn--primary:hover {
+  background: #ea6c0a;
+}

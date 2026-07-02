@@ -16,6 +16,8 @@ import { MacrocycleModal } from './MacrocycleModal'
 import { MicrocycleModal } from './MicrocycleModal'
 import { SessionModal } from './SessionModal'
 import { BulkSessionModal } from './BulkSessionModal'
+import { SessionViewModal } from './SessionViewModal'
+import { RegisterSessionModal } from './RegisterSessionModal'
 import './PlanDetailPage.css'
 
 // ---- Helpers ----
@@ -89,6 +91,9 @@ export function PlanDetailPage() {
 
   const [bulkModal, setBulkModal] = useState(false)
   const [bulkMicro, setBulkMicro] = useState<MicrocycleResponse | null>(null)
+
+  const [viewSession, setViewSession] = useState<SessionResponse | null>(null)
+  const [registerSession, setRegisterSession] = useState<SessionResponse | null>(null)
 
   const [completeModal, setCompleteModal] = useState(false)
   const [completingSession, setCompletingSession] = useState<SessionResponse | null>(null)
@@ -297,6 +302,7 @@ export function PlanDetailPage() {
               onDeleteMicro={(m) => deleteMicro(m.id)}
               onCreateSession={openCreateSession}
               onBulkCreateSession={openBulkCreate}
+              onViewSession={(s) => setViewSession(s)}
               onEditSession={openEditSession}
               onDeleteSession={deleteSession}
               onCompleteSession={openComplete}
@@ -339,6 +345,24 @@ export function PlanDetailPage() {
         existingSessions={bulkMicro ? (sessionsMap[bulkMicro.id] ?? []) : []}
         onClose={() => setBulkModal(false)}
         onCreated={handleSessionSaved}
+      />
+
+      <SessionViewModal
+        session={viewSession}
+        onClose={() => setViewSession(null)}
+        onEdit={() => { if (viewSession) openEditSession(viewSession) }}
+        onRegister={() => { if (viewSession) setRegisterSession(viewSession) }}
+      />
+
+      <RegisterSessionModal
+        session={registerSession}
+        onClose={() => setRegisterSession(null)}
+        onSaved={async (sessionId) => {
+          const sessions = await plansApi.getSessions(
+            registerSession!.microcycleId
+          )
+          setSessionsMap(m => ({ ...m, [registerSession!.microcycleId]: sessions }))
+        }}
       />
 
       {/* Complete Modal */}
@@ -391,6 +415,7 @@ interface MacroProps {
   onDeleteMicro: (m: MicrocycleResponse) => void
   onCreateSession: (microId: number) => void
   onBulkCreateSession: (micro: MicrocycleResponse) => void
+  onViewSession: (s: SessionResponse) => void
   onEditSession: (s: SessionResponse) => void
   onDeleteSession: (s: SessionResponse) => void
   onCompleteSession: (s: SessionResponse) => void
@@ -471,6 +496,7 @@ function MacrocycleBlock({ macro, expanded, onToggle, ...rest }: MacroProps) {
                   onDelete={() => rest.onDeleteMicro(micro)}
                   onCreateSession={() => rest.onCreateSession(micro.id)}
                   onBulkCreateSession={() => rest.onBulkCreateSession(micro)}
+                  onViewSession={rest.onViewSession}
                   onEditSession={rest.onEditSession}
                   onDeleteSession={rest.onDeleteSession}
                   onCompleteSession={rest.onCompleteSession}
@@ -487,7 +513,7 @@ function MacrocycleBlock({ macro, expanded, onToggle, ...rest }: MacroProps) {
 
 function MicrocycleBlock({
   micro, expanded, onToggle, sessions, loadingSessions,
-  onEdit, onDelete, onCreateSession, onBulkCreateSession, onEditSession, onDeleteSession, onCompleteSession, onUncompleteSession,
+  onEdit, onDelete, onCreateSession, onBulkCreateSession, onViewSession, onEditSession, onDeleteSession, onCompleteSession, onUncompleteSession,
 }: {
   micro: MicrocycleResponse
   expanded: boolean
@@ -498,6 +524,7 @@ function MicrocycleBlock({
   onDelete: () => void
   onCreateSession: () => void
   onBulkCreateSession: () => void
+  onViewSession: (s: SessionResponse) => void
   onEditSession: (s: SessionResponse) => void
   onDeleteSession: (s: SessionResponse) => void
   onCompleteSession: (s: SessionResponse) => void
@@ -576,6 +603,7 @@ function MicrocycleBlock({
                 <SessionRow
                   key={session.id}
                   session={session}
+                  onView={() => onViewSession(session)}
                   onEdit={() => onEditSession(session)}
                   onDelete={() => onDeleteSession(session)}
                   onComplete={() => onCompleteSession(session)}
@@ -590,8 +618,9 @@ function MicrocycleBlock({
   )
 }
 
-function SessionRow({ session, onEdit, onDelete, onComplete, onUncomplete }: {
+function SessionRow({ session, onView, onEdit, onDelete, onComplete, onUncomplete }: {
   session: SessionResponse
+  onView: () => void
   onEdit: () => void
   onDelete: () => void
   onComplete: () => void
@@ -614,7 +643,7 @@ function SessionRow({ session, onEdit, onDelete, onComplete, onUncomplete }: {
         )}
       </button>
 
-      <div className="session-content">
+      <div className="session-content" onClick={onView} style={{ cursor: 'pointer' }}>
         <div className="session-title-row">
           <span className="session-title">
             {workoutIcon[session.workoutType]} {session.title}
