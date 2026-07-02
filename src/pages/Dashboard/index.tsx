@@ -6,6 +6,8 @@ import { racesApi } from '../../api/races'
 import type { PlanSummaryResponse, RaceResponse, SessionResponse } from '../../types'
 import { Badge } from '../../components/ui/Badge'
 import { WeightChart } from './WeightChart'
+import { SessionViewModal } from '../PlanDetail/SessionViewModal'
+import { RegisterSessionModal } from '../PlanDetail/RegisterSessionModal'
 import './DashboardPage.css'
 
 function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
@@ -52,7 +54,12 @@ export function DashboardPage() {
   const [plans, setPlans] = useState<PlanSummaryResponse[]>([])
   const [races, setRaces] = useState<RaceResponse[]>([])
   const [nextSession, setNextSession] = useState<SessionResponse | null>(null)
+  const [viewSession, setViewSession] = useState<SessionResponse | null>(null)
+  const [registerSession, setRegisterSession] = useState<SessionResponse | null>(null)
   const [loading, setLoading] = useState(true)
+
+  const refreshNextSession = () =>
+    plansApi.nextSession().then(setNextSession).catch(() => {})
 
   useEffect(() => {
     Promise.all([plansApi.list(), racesApi.list(), plansApi.nextSession()])
@@ -195,13 +202,13 @@ export function DashboardPage() {
                 <Link to="/plans" className="dashboard-card__link">Ver planos</Link>
               </div>
               {nextSession ? (
-                <Link to={`/plans/${nextSession.planId}`} className="next-session-inner">
+                <button className="next-session-inner" onClick={() => setViewSession(nextSession)}>
                   <div className="next-session-type">
                     <span className="next-session-icon">{workoutIcon[nextSession.workoutType]}</span>
                     <div>
                       <p className="next-session-title">{nextSession.title}</p>
                       <div className="next-session-meta">
-                        <span className={`next-session-date ${nextSession.date === new Date().toISOString().slice(0,10) ? 'next-session-date--today' : ''}`}>
+                        <span className={`next-session-date ${fmtSessionDate(nextSession.date) === 'Hoje' ? 'next-session-date--today' : ''}`}>
                           {fmtSessionDate(nextSession.date)}
                         </span>
                         {nextSession.plannedDurationMinutes && <span>{nextSession.plannedDurationMinutes} min</span>}
@@ -221,7 +228,7 @@ export function DashboardPage() {
                       )}
                     </div>
                   )}
-                </Link>
+                </button>
               ) : (
                 <div className="dashboard-empty">
                   <p className="dashboard-empty__text">Sem treinos agendados</p>
@@ -258,6 +265,19 @@ export function DashboardPage() {
           )}
         </>
       )}
+
+      <SessionViewModal
+        session={viewSession}
+        onClose={() => setViewSession(null)}
+        onEdit={() => {}}
+        onRegister={() => { if (viewSession) { setRegisterSession(viewSession); setViewSession(null) } }}
+      />
+
+      <RegisterSessionModal
+        session={registerSession}
+        onClose={() => setRegisterSession(null)}
+        onSaved={() => { refreshNextSession() }}
+      />
     </div>
   )
 }
