@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useAuthStore } from '../../store/authStore'
 import { plansApi } from '../../api/plans'
 import { racesApi } from '../../api/races'
 import type { PlanSummaryResponse, RaceResponse, SessionResponse } from '../../types'
@@ -48,7 +47,6 @@ function fmtSessionDate(dateStr: string): string {
 }
 
 export function DashboardPage() {
-  const { user } = useAuthStore()
   const navigate = useNavigate()
   const [plans, setPlans] = useState<PlanSummaryResponse[]>([])
   const [races, setRaces] = useState<RaceResponse[]>([])
@@ -70,9 +68,6 @@ export function DashboardPage() {
     .filter((r) => daysUntil(r.date) > 0)
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
   const nextRace = upcomingRaces[0]
-
-  const hour = new Date().getHours()
-  const greeting = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite'
 
   return (
     <div className="dashboard-page">

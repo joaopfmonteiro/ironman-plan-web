@@ -35,17 +35,6 @@ const macroTypeColor: Record<string, 'blue' | 'orange' | 'red' | 'green' | 'purp
   RECOVERY: 'green',
 }
 
-const workoutTypeColor: Record<string, 'blue' | 'orange' | 'green' | 'purple' | 'slate' | 'teal'> = {
-  SWIM: 'blue',
-  BIKE: 'orange',
-  RUN: 'green',
-  STRENGTH: 'purple',
-  HYROX: 'orange',
-  CROSSFIT: 'teal',
-  BRICK: 'teal',
-  REST: 'slate',
-}
-
 const workoutIcon: Record<string, string> = {
   SWIM: '🏊',
   BIKE: '🚴',
@@ -169,7 +158,6 @@ export function PlanDetailPage() {
   }
 
   // ---- Session CRUD ----
-  const openCreateSession = (microId: number) => { setEditSession(null); setActiveMicroId(microId); setSessionModal(true) }
   const openEditSession = (s: SessionResponse) => { setEditSession(s); setActiveMicroId(s.microcycleId); setSessionModal(true) }
 
   const handleSessionSaved = (microId: number, sessions: SessionResponse[]) => {
@@ -258,7 +246,6 @@ export function PlanDetailPage() {
               onCreateMicro={() => openCreateMicro(macro)}
               onEditMicro={(m) => openEditMicro(m, macro)}
               onDeleteMicro={(m) => deleteMicro(m.id)}
-              onCreateSession={openCreateSession}
               onBulkCreateSession={openBulkCreate}
               onViewSession={(s) => setViewSession(s)}
               onEditSession={openEditSession}
@@ -314,7 +301,7 @@ export function PlanDetailPage() {
       <RegisterSessionModal
         session={registerSession}
         onClose={() => setRegisterSession(null)}
-        onSaved={async (sessionId) => {
+        onSaved={async () => {
           const sessions = await plansApi.getSessions(
             registerSession!.microcycleId
           )
@@ -341,7 +328,6 @@ interface MacroProps {
   onCreateMicro: () => void
   onEditMicro: (m: MicrocycleResponse, macro: MacrocycleResponse) => void
   onDeleteMicro: (m: MicrocycleResponse) => void
-  onCreateSession: (microId: number) => void
   onBulkCreateSession: (micro: MicrocycleResponse) => void
   onViewSession: (s: SessionResponse) => void
   onEditSession: (s: SessionResponse) => void
@@ -420,7 +406,6 @@ function MacrocycleBlock({ macro, expanded, onToggle, ...rest }: MacroProps) {
                   loadingSessions={rest.loadingSessions.has(micro.id)}
                   onEdit={() => rest.onEditMicro(micro, macro)}
                   onDelete={() => rest.onDeleteMicro(micro)}
-                  onCreateSession={() => rest.onCreateSession(micro.id)}
                   onBulkCreateSession={() => rest.onBulkCreateSession(micro)}
                   onViewSession={rest.onViewSession}
                   onEditSession={rest.onEditSession}
@@ -437,7 +422,7 @@ function MacrocycleBlock({ macro, expanded, onToggle, ...rest }: MacroProps) {
 
 function MicrocycleBlock({
   micro, expanded, onToggle, sessions, loadingSessions,
-  onEdit, onDelete, onCreateSession, onBulkCreateSession, onViewSession, onEditSession, onDeleteSession,
+  onEdit, onDelete, onBulkCreateSession, onViewSession, onEditSession, onDeleteSession,
 }: {
   micro: MicrocycleResponse
   expanded: boolean
@@ -446,7 +431,6 @@ function MicrocycleBlock({
   loadingSessions: boolean
   onEdit: () => void
   onDelete: () => void
-  onCreateSession: () => void
   onBulkCreateSession: () => void
   onViewSession: (s: SessionResponse) => void
   onEditSession: (s: SessionResponse) => void

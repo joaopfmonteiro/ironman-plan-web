@@ -180,7 +180,7 @@ export function ProgressPage() {
                   />
                   <Tooltip
                     contentStyle={{ borderRadius: '0.5rem', border: '1px solid #e2e8f0', fontSize: '0.85rem' }}
-                    formatter={(v: number) => [`${v} kg`, '1RM est.']}
+                    formatter={(v) => [`${v} kg`, '1RM est.']}
                   />
                   {bestRM && (
                     <ReferenceLine y={bestRM} stroke="#f97316" strokeDasharray="4 4" label={{ value: 'Máximo', fill: '#f97316', fontSize: 11 }} />
@@ -210,7 +210,7 @@ export function ProgressPage() {
                   <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} width={55} />
                   <Tooltip
                     contentStyle={{ borderRadius: '0.5rem', border: '1px solid #e2e8f0', fontSize: '0.85rem' }}
-                    formatter={(v: number) => [`${v} kg·rep`, 'Volume']}
+                    formatter={(v) => [`${v} kg·rep`, 'Volume']}
                   />
                   <Bar dataKey="volume" fill="#fed7aa" radius={[4, 4, 0, 0]} />
                 </BarChart>
