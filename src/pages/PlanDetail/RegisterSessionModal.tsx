@@ -165,20 +165,18 @@ export function RegisterSessionModal({ session, onClose, onSaved }: Props) {
   const handleSave = async () => {
     setSaving(true)
     try {
-      const hasEndurance = duration || distance || heartRate || rpe || notes
-      if (hasEndurance) {
-        const payload = {
-          actualDurationMinutes: duration ? Number(duration) : undefined,
-          actualDistanceKm: distance ? Number(distance) : undefined,
-          averageHeartRate: heartRate ? Number(heartRate) : undefined,
-          perceivedEffort: rpe ? Number(rpe) : undefined,
-          notes: notes || undefined,
-        }
-        if (session.result) {
-          await plansApi.updateResult(session.id, payload)
-        } else {
-          await plansApi.completeSession(session.id, payload)
-        }
+      // Always mark session as complete when saving
+      const payload = {
+        actualDurationMinutes: duration ? Number(duration) : undefined,
+        actualDistanceKm: distance ? Number(distance) : undefined,
+        averageHeartRate: heartRate ? Number(heartRate) : undefined,
+        perceivedEffort: rpe ? Number(rpe) : undefined,
+        notes: notes || undefined,
+      }
+      if (session.result) {
+        await plansApi.updateResult(session.id, payload)
+      } else {
+        await plansApi.completeSession(session.id, payload)
       }
 
       if (isStrength) {
