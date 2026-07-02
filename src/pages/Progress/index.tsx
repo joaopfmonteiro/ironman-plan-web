@@ -234,16 +234,24 @@ export function ProgressPage() {
                 </thead>
                 <tbody>
                   {[...history].reverse().map(log => {
-                    const bestSet = log.sets
-                      .filter(s => s.completed && s.weightKg)
-                      .sort((a, b) => (b.weightKg ?? 0) - (a.weightKg ?? 0))[0]
+                    const completedSets = log.sets.filter(s => s.completed)
+                    const hasWeight = completedSets.some(s => s.weightKg && s.weightKg > 0)
+                    const bestSet = hasWeight
+                      ? completedSets
+                          .filter(s => s.weightKg && s.weightKg > 0)
+                          .sort((a, b) => (b.weightKg ?? 0) - (a.weightKg ?? 0))[0]
+                      : completedSets
+                          .filter(s => s.reps)
+                          .sort((a, b) => (b.reps ?? 0) - (a.reps ?? 0))[0]
                     return (
                       <tr key={log.id}>
                         <td>{formatDate(log.loggedAt)}</td>
-                        <td>{log.sets.filter(s => s.completed).length} séries</td>
+                        <td>{completedSets.length} séries</td>
                         <td>
                           {bestSet
-                            ? `${bestSet.reps} × ${bestSet.weightKg} kg`
+                            ? hasWeight
+                              ? `${bestSet.reps} × ${bestSet.weightKg} kg`
+                              : `${bestSet.reps} reps`
                             : '—'}
                         </td>
                         <td>{Math.round(calcVolume(log))} kg·rep</td>
