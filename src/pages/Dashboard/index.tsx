@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
 import { plansApi } from '../../api/plans'
 import { racesApi } from '../../api/races'
-import type { PlanSummaryResponse, RaceResponse } from '../../types'
+import type { PlanSummaryResponse, RaceResponse, SessionResponse } from '../../types'
 import { Badge } from '../../components/ui/Badge'
 import { WeightChart } from './WeightChart'
 import './DashboardPage.css'
@@ -34,17 +34,32 @@ const raceDistanceLabel: Record<string, string> = {
   IRON140: 'Ironman 140.6',
 }
 
+const workoutIcon: Record<string, string> = {
+  RUN: '🏃', SWIM: '🏊', BIKE: '🚴', STRENGTH: '🏋️', HYROX: '⚡', CROSSFIT: '🔥',
+  BRICK: '🧱', REST: '😴', OTHER: '📋',
+}
+
+function fmtSessionDate(dateStr: string): string {
+  const today = new Date().toISOString().slice(0, 10)
+  const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10)
+  if (dateStr === today) return 'Hoje'
+  if (dateStr === tomorrow) return 'Amanhã'
+  return new Date(dateStr).toLocaleDateString('pt-PT', { weekday: 'short', day: 'numeric', month: 'short' })
+}
+
 export function DashboardPage() {
   const { user } = useAuthStore()
   const [plans, setPlans] = useState<PlanSummaryResponse[]>([])
   const [races, setRaces] = useState<RaceResponse[]>([])
+  const [nextSession, setNextSession] = useState<SessionResponse | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    Promise.all([plansApi.list(), racesApi.list()])
-      .then(([p, r]) => {
+    Promise.all([plansApi.list(), racesApi.list(), plansApi.nextSession()])
+      .then(([p, r, ns]) => {
         setPlans(p)
         setRaces(r)
+        setNextSession(ns)
       })
       .finally(() => setLoading(false))
   }, [])
@@ -78,6 +93,47 @@ export function DashboardPage() {
               sub={nextRace?.name}
             />
           </div>
+
+          {/* Next session */}
+          {nextSession ? (
+            <Link to={`/plans/${nextSession.planId}`} className="next-session-card">
+              <div className="next-session-card__left">
+                <p className="next-session-card__label">Próximo treino</p>
+                <p className="next-session-card__title">
+                  {workoutIcon[nextSession.workoutType]} {nextSession.title}
+                </p>
+                <div className="next-session-card__meta">
+                  <span className={`next-session-date ${nextSession.date === new Date().toISOString().slice(0,10) ? 'next-session-date--today' : ''}`}>
+                    {fmtSessionDate(nextSession.date)}
+                  </span>
+                  {nextSession.plannedDurationMinutes && <span>{nextSession.plannedDurationMinutes} min</span>}
+                  {nextSession.plannedDistanceKm && <span>{nextSession.plannedDistanceKm} km</span>}
+                </div>
+                {nextSession.exercises && nextSession.exercises.length > 0 && (
+                  <div className="next-session-exercises">
+                    {nextSession.exercises.slice(0, 4).map((ex, i) => (
+                      <span key={i} className="next-session-ex-tag">
+                        {ex.name}{ex.sets && ex.reps ? ` ${ex.sets}×${ex.reps}` : ''}
+                      </span>
+                    ))}
+                    {nextSession.exercises.length > 4 && (
+                      <span className="next-session-ex-tag">+{nextSession.exercises.length - 4}</span>
+                    )}
+                  </div>
+                )}
+              </div>
+              <div className="next-session-card__arrow">
+                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </Link>
+          ) : (
+            <div className="next-session-empty">
+              <span>Sem treinos agendados</span>
+              <Link to="/plans" className="dashboard-card__link">Ir para os planos →</Link>
+            </div>
+          )}
 
           <div className="dashboard-grid">
             {/* Active Plan */}

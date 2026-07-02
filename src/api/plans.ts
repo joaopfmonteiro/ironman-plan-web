@@ -132,6 +132,10 @@ export const plansApi = {
   deleteMicrocycle: (id: number) =>
     client.delete(`/microcycles/${id}`),
 
+  // Next upcoming session across all plans
+  nextSession: () =>
+    client.get<SessionResponse>('/sessions/next').then((r) => r.data).catch(() => null),
+
   // Sessions
   getSessions: (microcycleId: number) =>
     client.get<SessionResponse[]>(`/microcycles/${microcycleId}/sessions`).then((r) => r.data),

@@ -101,6 +101,7 @@ export interface SessionExercise {
 export interface SessionResponse {
   id: number
   microcycleId: number
+  planId?: number
   date: string
   workoutType: WorkoutType
   title: string
