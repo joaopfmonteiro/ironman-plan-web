@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom'
 import { plansApi } from '../../api/plans'
 import type {
   PlanResponse,
@@ -62,6 +62,7 @@ const workoutIcon: Record<string, string> = {
 export function PlanDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const location = useLocation()
   const planId = Number(id)
 
   const [plan, setPlan] = useState<PlanResponse | null>(null)
@@ -108,6 +109,20 @@ export function PlanDetailPage() {
       setLoadingSessions((s) => { const ns = new Set(s); ns.delete(microId); return ns })
     }
   }
+
+  // Auto-open a session passed via navigation state (e.g. from dashboard's next session card)
+  useEffect(() => {
+    const openSession = (location.state as { openSession?: SessionResponse } | null)?.openSession
+    if (!plan || !openSession) return
+    const macro = plan.macrocycles.find((m) => m.microcycles.some((mc) => mc.id === openSession.microcycleId))
+    if (macro) {
+      setExpandedMacro(macro.id)
+      setExpandedMicro(openSession.microcycleId)
+      loadSessions(openSession.microcycleId)
+    }
+    setViewSession(openSession)
+    navigate(location.pathname, { replace: true, state: null })
+  }, [plan])
 
   const toggleMicro = async (microId: number) => {
     if (expandedMicro === microId) {

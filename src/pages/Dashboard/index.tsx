@@ -1,13 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
 import { plansApi } from '../../api/plans'
 import { racesApi } from '../../api/races'
 import type { PlanSummaryResponse, RaceResponse, SessionResponse } from '../../types'
 import { Badge } from '../../components/ui/Badge'
 import { WeightChart } from './WeightChart'
-import { SessionViewModal } from '../PlanDetail/SessionViewModal'
-import { RegisterSessionModal } from '../PlanDetail/RegisterSessionModal'
 import './DashboardPage.css'
 
 function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
@@ -51,15 +49,11 @@ function fmtSessionDate(dateStr: string): string {
 
 export function DashboardPage() {
   const { user } = useAuthStore()
+  const navigate = useNavigate()
   const [plans, setPlans] = useState<PlanSummaryResponse[]>([])
   const [races, setRaces] = useState<RaceResponse[]>([])
   const [nextSession, setNextSession] = useState<SessionResponse | null>(null)
-  const [viewSession, setViewSession] = useState<SessionResponse | null>(null)
-  const [registerSession, setRegisterSession] = useState<SessionResponse | null>(null)
   const [loading, setLoading] = useState(true)
-
-  const refreshNextSession = () =>
-    plansApi.nextSession().then(setNextSession).catch(() => {})
 
   useEffect(() => {
     Promise.all([plansApi.list(), racesApi.list(), plansApi.nextSession()])
@@ -202,7 +196,14 @@ export function DashboardPage() {
                 <Link to="/plans" className="dashboard-card__link">Ver planos</Link>
               </div>
               {nextSession ? (
-                <button className="next-session-inner" onClick={() => setViewSession(nextSession)}>
+                <button
+                  className="next-session-inner"
+                  onClick={() =>
+                    navigate(nextSession.planId ? `/plans/${nextSession.planId}` : '/plans', {
+                      state: { openSession: nextSession },
+                    })
+                  }
+                >
                   <div className="next-session-type">
                     <span className="next-session-icon">{workoutIcon[nextSession.workoutType]}</span>
                     <div>
@@ -265,19 +266,6 @@ export function DashboardPage() {
           )}
         </>
       )}
-
-      <SessionViewModal
-        session={viewSession}
-        onClose={() => setViewSession(null)}
-        onEdit={() => {}}
-        onRegister={() => { if (viewSession) { setRegisterSession(viewSession); setViewSession(null) } }}
-      />
-
-      <RegisterSessionModal
-        session={registerSession}
-        onClose={() => setRegisterSession(null)}
-        onSaved={() => { refreshNextSession() }}
-      />
     </div>
   )
 }
