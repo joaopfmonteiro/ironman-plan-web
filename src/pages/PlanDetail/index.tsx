@@ -8,9 +8,6 @@ import type {
   SessionResponse,
 } from '../../types'
 import { Button } from '../../components/ui/Button'
-import { Input } from '../../components/ui/Input'
-import { Select } from '../../components/ui/Select'
-import { Modal } from '../../components/ui/Modal'
 import { Badge } from '../../components/ui/Badge'
 import { MacrocycleModal } from './MacrocycleModal'
 import { MicrocycleModal } from './MicrocycleModal'
@@ -95,13 +92,6 @@ export function PlanDetailPage() {
   const [viewSession, setViewSession] = useState<SessionResponse | null>(null)
   const [registerSession, setRegisterSession] = useState<SessionResponse | null>(null)
 
-  const [completeModal, setCompleteModal] = useState(false)
-  const [completingSession, setCompletingSession] = useState<SessionResponse | null>(null)
-  const [completeForm, setCompleteForm] = useState({
-    actualDurationMinutes: '', actualDistanceKm: '', averageHeartRate: '', perceivedEffort: '', notes: '',
-  })
-
-  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     setLoading(true)
@@ -180,53 +170,6 @@ export function PlanDetailPage() {
     setSessionsMap((m) => ({ ...m, [s.microcycleId]: sessions }))
   }
 
-  // ---- Complete session ----
-  const openComplete = (s: SessionResponse) => {
-    setCompletingSession(s)
-    if (s.result) {
-      setCompleteForm({
-        actualDurationMinutes: s.result.actualDurationMinutes?.toString() || '',
-        actualDistanceKm: s.result.actualDistanceKm?.toString() || '',
-        averageHeartRate: s.result.averageHeartRate?.toString() || '',
-        perceivedEffort: s.result.perceivedEffort?.toString() || '',
-        notes: s.result.notes || '',
-      })
-    } else {
-      setCompleteForm({ actualDurationMinutes: '', actualDistanceKm: '', averageHeartRate: '', perceivedEffort: '', notes: '' })
-    }
-    setCompleteModal(true)
-  }
-  const saveComplete = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!completingSession) return
-    setSaving(true)
-    const payload = {
-      actualDurationMinutes: completeForm.actualDurationMinutes ? Number(completeForm.actualDurationMinutes) : undefined,
-      actualDistanceKm: completeForm.actualDistanceKm ? Number(completeForm.actualDistanceKm) : undefined,
-      averageHeartRate: completeForm.averageHeartRate ? Number(completeForm.averageHeartRate) : undefined,
-      perceivedEffort: completeForm.perceivedEffort ? Number(completeForm.perceivedEffort) : undefined,
-      notes: completeForm.notes || undefined,
-    }
-    try {
-      if (completingSession.result) {
-        await plansApi.updateResult(completingSession.id, payload)
-      } else {
-        await plansApi.completeSession(completingSession.id, payload)
-      }
-      setCompleteModal(false)
-      const sessions = await plansApi.getSessions(completingSession.microcycleId)
-      setSessionsMap((m) => ({ ...m, [completingSession.microcycleId]: sessions }))
-    } finally { setSaving(false) }
-  }
-  const uncompleteSession = async (s: SessionResponse) => {
-    if (!confirm('Remover resultado desta sessão?')) return
-    await plansApi.deleteResult(s.id)
-    const sessions = await plansApi.getSessions(s.microcycleId)
-    setSessionsMap((m) => ({ ...m, [s.microcycleId]: sessions }))
-  }
-
-  const setCF = (f: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-    setCompleteForm((p) => ({ ...p, [f]: e.target.value }))
 
   // ---- Render ----
 
@@ -305,8 +248,6 @@ export function PlanDetailPage() {
               onViewSession={(s) => setViewSession(s)}
               onEditSession={openEditSession}
               onDeleteSession={deleteSession}
-              onCompleteSession={openComplete}
-              onUncompleteSession={uncompleteSession}
             />
           ))}
         </div>
@@ -354,6 +295,7 @@ export function PlanDetailPage() {
         onRegister={() => { if (viewSession) setRegisterSession(viewSession) }}
       />
 
+
       <RegisterSessionModal
         session={registerSession}
         onClose={() => setRegisterSession(null)}
@@ -365,35 +307,6 @@ export function PlanDetailPage() {
         }}
       />
 
-      {/* Complete Modal */}
-      <Modal open={completeModal} onClose={() => setCompleteModal(false)} title={completingSession?.result ? 'Editar Resultado' : 'Registar Resultado'}>
-        <form onSubmit={saveComplete} className="modal-form">
-          {completingSession && (
-            <div className="complete-session-preview">
-              {workoutIcon[completingSession.workoutType]} {completingSession.title}
-            </div>
-          )}
-          <div className="modal-grid-2">
-            <Input label="Duração real (min)" type="number" value={completeForm.actualDurationMinutes} onChange={setCF('actualDurationMinutes')} />
-            <Input label="Distância real (km)" type="number" value={completeForm.actualDistanceKm} onChange={setCF('actualDistanceKm')} step="0.1" />
-          </div>
-          <div className="modal-grid-2">
-            <Input label="FC média (bpm)" type="number" value={completeForm.averageHeartRate} onChange={setCF('averageHeartRate')} />
-            <Input label="Esforço (1-10)" type="number" value={completeForm.perceivedEffort} onChange={setCF('perceivedEffort')} min="1" max="10" />
-          </div>
-          <div className="modal-field">
-            <label className="modal-field__label">Notas</label>
-            <textarea value={completeForm.notes} onChange={setCF('notes')} rows={2}
-              className="modal-textarea" placeholder="Como correu o treino?" />
-          </div>
-          <div className="modal-actions">
-            <Button type="button" variant="secondary" className="flex-1" onClick={() => setCompleteModal(false)}>Cancelar</Button>
-            <Button type="submit" loading={saving} className="flex-1">
-              {completingSession?.result ? 'Atualizar' : 'Registar'}
-            </Button>
-          </div>
-        </form>
-      </Modal>
     </div>
   )
 }
@@ -418,8 +331,6 @@ interface MacroProps {
   onViewSession: (s: SessionResponse) => void
   onEditSession: (s: SessionResponse) => void
   onDeleteSession: (s: SessionResponse) => void
-  onCompleteSession: (s: SessionResponse) => void
-  onUncompleteSession: (s: SessionResponse) => void
 }
 
 function MacrocycleBlock({ macro, expanded, onToggle, ...rest }: MacroProps) {
@@ -499,8 +410,6 @@ function MacrocycleBlock({ macro, expanded, onToggle, ...rest }: MacroProps) {
                   onViewSession={rest.onViewSession}
                   onEditSession={rest.onEditSession}
                   onDeleteSession={rest.onDeleteSession}
-                  onCompleteSession={rest.onCompleteSession}
-                  onUncompleteSession={rest.onUncompleteSession}
                 />
               ))}
             </div>
@@ -513,7 +422,7 @@ function MacrocycleBlock({ macro, expanded, onToggle, ...rest }: MacroProps) {
 
 function MicrocycleBlock({
   micro, expanded, onToggle, sessions, loadingSessions,
-  onEdit, onDelete, onCreateSession, onBulkCreateSession, onViewSession, onEditSession, onDeleteSession, onCompleteSession, onUncompleteSession,
+  onEdit, onDelete, onCreateSession, onBulkCreateSession, onViewSession, onEditSession, onDeleteSession,
 }: {
   micro: MicrocycleResponse
   expanded: boolean
@@ -527,8 +436,6 @@ function MicrocycleBlock({
   onViewSession: (s: SessionResponse) => void
   onEditSession: (s: SessionResponse) => void
   onDeleteSession: (s: SessionResponse) => void
-  onCompleteSession: (s: SessionResponse) => void
-  onUncompleteSession: (s: SessionResponse) => void
 }) {
   const FOCUS_LABEL: Record<string, string> = {
     VOLUME: 'Volume', INTENSITY: 'Intensidade', RECOVERY: 'Recuperação', TEST: 'Teste',
@@ -606,8 +513,6 @@ function MicrocycleBlock({
                   onView={() => onViewSession(session)}
                   onEdit={() => onEditSession(session)}
                   onDelete={() => onDeleteSession(session)}
-                  onComplete={() => onCompleteSession(session)}
-                  onUncomplete={() => onUncompleteSession(session)}
                 />
               ))}
             </div>
@@ -618,13 +523,11 @@ function MicrocycleBlock({
   )
 }
 
-function SessionRow({ session, onView, onEdit, onDelete, onComplete, onUncomplete }: {
+function SessionRow({ session, onView, onEdit, onDelete }: {
   session: SessionResponse
   onView: () => void
   onEdit: () => void
   onDelete: () => void
-  onComplete: () => void
-  onUncomplete: () => void
 }) {
   const ZONE_COLOR: Record<string, 'green' | 'blue' | 'yellow' | 'orange' | 'red'> = {
     Z1: 'green', Z2: 'blue', Z3: 'yellow', Z4: 'orange', Z5: 'red',
@@ -632,16 +535,13 @@ function SessionRow({ session, onView, onEdit, onDelete, onComplete, onUncomplet
 
   return (
     <div className={`session-row ${session.completed ? 'session-row--completed' : 'session-row--pending'}`}>
-      <button
-        onClick={session.completed ? onUncomplete : onComplete}
-        className={`session-complete-btn ${session.completed ? 'session-complete-btn--done' : 'session-complete-btn--pending'}`}
-      >
-        {session.completed && (
-          <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-          </svg>
-        )}
-      </button>
+      {/* Status indicator */}
+      <div className={`session-status ${session.completed ? 'session-status--done' : 'session-status--pending'}`}>
+        {session.completed
+          ? <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+          : <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        }
+      </div>
 
       <div className="session-content" onClick={onView} style={{ cursor: 'pointer' }}>
         <div className="session-title-row">
@@ -651,6 +551,9 @@ function SessionRow({ session, onView, onEdit, onDelete, onComplete, onUncomplet
           {session.intensityZone && (
             <Badge color={ZONE_COLOR[session.intensityZone] || 'slate'}>{session.intensityZone}</Badge>
           )}
+          {session.completed && (
+            <span className="session-done-badge">Concluído</span>
+          )}
         </div>
         <div className="session-meta">
           <span>{formatDate(session.date)}</span>
@@ -658,7 +561,7 @@ function SessionRow({ session, onView, onEdit, onDelete, onComplete, onUncomplet
           {session.plannedDistanceKm && <span>{session.plannedDistanceKm} km</span>}
           {session.completed && session.result && (
             <span className="session-result">
-              ✓ {session.result.actualDurationMinutes && `${session.result.actualDurationMinutes}min`}
+              {session.result.actualDurationMinutes && `${session.result.actualDurationMinutes}min reais`}
               {session.result.perceivedEffort && ` · RPE ${session.result.perceivedEffort}/10`}
             </span>
           )}
