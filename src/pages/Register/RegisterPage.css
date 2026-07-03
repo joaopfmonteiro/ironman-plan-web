@@ -172,6 +172,22 @@
   color: #ea6c0a;
 }
 
+@media (max-width: 640px) {
+  .register-form-panel {
+    padding: 2rem 1.25rem;
+  }
+
+  .register-input {
+    padding: 0.95rem 1.1rem;
+    font-size: 1rem;
+  }
+
+  .register-btn {
+    padding: 1.05rem;
+    font-size: 1rem;
+  }
+}
+
 /* Right panel — branding (reutiliza o mesmo painel do login) */
 .register-brand-panel {
   display: none;
