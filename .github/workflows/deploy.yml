@@ -35,16 +35,15 @@ jobs:
     steps:
       - name: Write SSH key
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.VPS_SSH_KEY_B64 }}" | base64 -d > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
+          echo "${{ secrets.VPS_SSH_KEY_B64 }}" | base64 -d > ${{ runner.temp }}/deploy_key
+          chmod 600 ${{ runner.temp }}/deploy_key
 
       - name: Deploy to VPS
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
-          key_path: ~/.ssh/deploy_key
+          key_path: ${{ runner.temp }}/deploy_key
           script: |
             cd ~/vokaro
             docker compose pull
