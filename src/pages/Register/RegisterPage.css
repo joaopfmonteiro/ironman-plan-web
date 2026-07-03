@@ -50,6 +50,28 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  position: relative;
+}
+
+.register-input--password {
+  padding-right: 2.75rem;
+}
+
+.register-password-toggle {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  padding: 0.25rem;
+  color: #94a3b8;
+  cursor: pointer;
+  display: flex;
+}
+
+.register-password-toggle:hover {
+  color: #64748b;
 }
 
 .register-label {

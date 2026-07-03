@@ -46,6 +46,24 @@
   gap: 0.5rem;
   width: 80%;
   align-self: center;
+  position: relative;
+}
+
+.login-password-toggle {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  padding: 0.25rem;
+  color: #94a3b8;
+  cursor: pointer;
+  display: flex;
+}
+
+.login-password-toggle:hover {
+  color: #64748b;
 }
 
 .login-label {
@@ -73,6 +91,10 @@
 .login-input:focus {
   border-color: #f97316;
   box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
+}
+
+.login-input--password {
+  padding-right: 2.75rem;
 }
 
 .login-btn {

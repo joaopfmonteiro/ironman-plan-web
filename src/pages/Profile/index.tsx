@@ -5,6 +5,24 @@ import { authApi } from '../../api/auth'
 import { useAuthStore } from '../../store/authStore'
 import './ProfilePage.css'
 
+function EyeIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  )
+}
+
+function EyeOffIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" />
+      <line x1="1" y1="1" x2="23" y2="23" />
+    </svg>
+  )
+}
+
 export function ProfilePage() {
   const navigate = useNavigate()
   const { user, updateUser } = useAuthStore()
@@ -22,6 +40,9 @@ export function ProfilePage() {
     newPassword: '',
     confirmPassword: '',
   })
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false)
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [fetching, setFetching] = useState(true)
   const [error, setError] = useState('')
@@ -158,38 +179,71 @@ export function ProfilePage() {
 
                 <div className="profile-field">
                   <label className="profile-label">Password actual</label>
-                  <input
-                    type="password"
-                    value={passwords.currentPassword}
-                    onChange={setPassword('currentPassword')}
-                    placeholder="••••••••"
-                    autoComplete="current-password"
-                    className="profile-input"
-                  />
+                  <div className="profile-input-wrap">
+                    <input
+                      type={showCurrentPassword ? 'text' : 'password'}
+                      value={passwords.currentPassword}
+                      onChange={setPassword('currentPassword')}
+                      placeholder="••••••••"
+                      autoComplete="current-password"
+                      className="profile-input profile-input--password"
+                    />
+                    <button
+                      type="button"
+                      className="profile-password-toggle"
+                      onClick={() => setShowCurrentPassword((v) => !v)}
+                      tabIndex={-1}
+                      aria-label={showCurrentPassword ? 'Ocultar password' : 'Mostrar password'}
+                    >
+                      {showCurrentPassword ? <EyeOffIcon /> : <EyeIcon />}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="profile-field">
                   <label className="profile-label">Nova password</label>
-                  <input
-                    type="password"
-                    value={passwords.newPassword}
-                    onChange={setPassword('newPassword')}
-                    placeholder="••••••••"
-                    autoComplete="new-password"
-                    className="profile-input"
-                  />
+                  <div className="profile-input-wrap">
+                    <input
+                      type={showNewPassword ? 'text' : 'password'}
+                      value={passwords.newPassword}
+                      onChange={setPassword('newPassword')}
+                      placeholder="••••••••"
+                      autoComplete="new-password"
+                      className="profile-input profile-input--password"
+                    />
+                    <button
+                      type="button"
+                      className="profile-password-toggle"
+                      onClick={() => setShowNewPassword((v) => !v)}
+                      tabIndex={-1}
+                      aria-label={showNewPassword ? 'Ocultar password' : 'Mostrar password'}
+                    >
+                      {showNewPassword ? <EyeOffIcon /> : <EyeIcon />}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="profile-field">
                   <label className="profile-label">Confirmar nova password</label>
-                  <input
-                    type="password"
-                    value={passwords.confirmPassword}
-                    onChange={setPassword('confirmPassword')}
-                    placeholder="••••••••"
-                    autoComplete="new-password"
-                    className={`profile-input${!passwordsMatch ? ' profile-input--error' : ''}`}
-                  />
+                  <div className="profile-input-wrap">
+                    <input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      value={passwords.confirmPassword}
+                      onChange={setPassword('confirmPassword')}
+                      placeholder="••••••••"
+                      autoComplete="new-password"
+                      className={`profile-input profile-input--password${!passwordsMatch ? ' profile-input--error' : ''}`}
+                    />
+                    <button
+                      type="button"
+                      className="profile-password-toggle"
+                      onClick={() => setShowConfirmPassword((v) => !v)}
+                      tabIndex={-1}
+                      aria-label={showConfirmPassword ? 'Ocultar password' : 'Mostrar password'}
+                    >
+                      {showConfirmPassword ? <EyeOffIcon /> : <EyeIcon />}
+                    </button>
+                  </div>
                 </div>
               </div>
 
