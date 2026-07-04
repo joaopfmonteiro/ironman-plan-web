@@ -6,6 +6,7 @@
 }
 
 .app-nav {
+  position: relative;
   height: 64px;
   flex-shrink: 0;
   background-color: #0f172a;
@@ -15,6 +16,21 @@
   gap: 2rem;
   border-bottom: 1px solid #1e293b;
   z-index: 50;
+}
+
+.app-nav-burger {
+  display: none;
+  background: none;
+  border: none;
+  color: #e2e8f0;
+  cursor: pointer;
+  padding: 0.5rem;
+  margin-left: auto;
+}
+
+.app-nav-burger svg {
+  width: 1.5rem;
+  height: 1.5rem;
 }
 
 .app-nav-logo {
@@ -88,6 +104,10 @@
   width: 1.1rem;
   height: 1.1rem;
   flex-shrink: 0;
+}
+
+.app-nav-link--logout {
+  display: none;
 }
 
 .app-nav-right {
@@ -180,4 +200,74 @@
   flex: 1;
   overflow-y: auto;
   min-height: 0;
+}
+
+@media (max-width: 900px) {
+  .app-nav {
+    gap: 0.75rem;
+    padding: 0 1rem 0 0;
+    justify-content: space-between;
+  }
+
+  .app-nav-burger {
+    display: flex;
+    order: 1;
+    margin-left: 0.5rem;
+  }
+
+  .app-nav-logo {
+    order: 2;
+  }
+
+  .app-nav-right {
+    order: 3;
+  }
+
+  .app-nav-divider,
+  .app-nav-right > .app-nav-logout {
+    display: none;
+  }
+
+  .app-nav-link--logout {
+    display: flex;
+    margin-top: 0.5rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #1e293b;
+    color: #f87171;
+    background: none;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    width: 100%;
+  }
+
+  .app-nav-links {
+    display: none;
+    position: absolute;
+    top: 64px;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.25rem;
+    background-color: #0f172a;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #1e293b;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+  }
+
+  .app-nav-links--open {
+    display: flex;
+  }
+
+  .app-nav-link {
+    padding: 0.75rem 1rem;
+  }
+
+  .app-nav-user-info {
+    display: none;
+  }
 }

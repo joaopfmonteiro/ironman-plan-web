@@ -183,7 +183,7 @@ export function DashboardPage() {
             </div>
           </div>
 
-          <div className="dashboard-bottom-grid">
+          <div >
             {/* Next session */}
             <div className="dashboard-card">
               <div className="dashboard-card__header">
