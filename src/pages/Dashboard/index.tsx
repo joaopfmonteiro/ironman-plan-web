@@ -5,6 +5,7 @@ import { racesApi } from '../../api/races'
 import type { PlanSummaryResponse, RaceResponse, SessionResponse } from '../../types'
 import { Badge } from '../../components/ui/Badge'
 import { WeightChart } from './WeightChart'
+import { toLocalISODate } from '../../utils/date'
 import './DashboardPage.css'
 
 function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
@@ -39,8 +40,8 @@ const workoutIcon: Record<string, string> = {
 }
 
 function fmtSessionDate(dateStr: string): string {
-  const today = new Date().toISOString().slice(0, 10)
-  const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10)
+  const today = toLocalISODate()
+  const tomorrow = toLocalISODate(new Date(Date.now() + 86400000))
   if (dateStr === today) return 'Hoje'
   if (dateStr === tomorrow) return 'Amanhã'
   return new Date(dateStr).toLocaleDateString('pt-PT', { weekday: 'short', day: 'numeric', month: 'short' })

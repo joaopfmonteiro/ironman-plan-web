@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { plansApi } from '../../api/plans'
 import { workoutTemplatesApi } from '../../api/workoutTemplates'
 import type { SessionExercise, SessionResponse, WorkoutTemplate } from '../../types'
+import { toLocalISODate } from '../../utils/date'
 import './SessionModal.css'
 
 const WORKOUT_TYPES = [
@@ -34,7 +35,7 @@ const INTENSITY_ZONES = [
 const ENDURANCE_TYPES = new Set(['SWIM', 'BIKE', 'RUN', 'BRICK'])
 const STRENGTH_WORKOUT_TYPES = new Set(['STRENGTH', 'HYROX', 'CROSSFIT'])
 
-const today = () => new Date().toISOString().slice(0, 10)
+const today = () => toLocalISODate()
 const emptyExercise = (): SessionExercise => ({ name: '', sets: undefined, reps: undefined, weightKg: undefined })
 
 interface Props {

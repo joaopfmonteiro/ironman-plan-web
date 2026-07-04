@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { weightApi } from '../../api/weight'
 import type { WeightEntryResponse } from '../../types'
+import { toLocalISODate } from '../../utils/date'
 import './WeightChart.css'
 
 const W = 600
@@ -80,7 +81,7 @@ export function WeightChart() {
   const startMs     = periodStart.getTime()
   const endMs       = periodEnd.getTime()
 
-  const startStr = periodStart.toISOString().slice(0, 10)
+  const startStr = toLocalISODate(periodStart)
   const entries  = allEntries.filter((e) => e.date >= startStr)
 
   const last = allEntries[allEntries.length - 1]
@@ -146,7 +147,7 @@ export function WeightChart() {
             )
           })}
           {xTicks.map((tick, i) => {
-            const x = dateToX(tick.toISOString().slice(0, 10), startMs, endMs)
+            const x = dateToX(toLocalISODate(tick), startMs, endMs)
             return (
               <g key={i} className="weight-x-tick">
                 <line x1={x} y1={PT} x2={x} y2={PT + IH} stroke="#f8fafc" strokeWidth="1" />
