@@ -54,13 +54,31 @@ export function DashboardPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    Promise.all([plansApi.list(), racesApi.list(), plansApi.nextSession()])
-      .then(([p, r, ns]) => {
-        setPlans(p)
-        setRaces(r)
-        setNextSession(ns)
-      })
-      .finally(() => setLoading(false))
+    let cancelled = false
+
+    const load = (attempt: number) => {
+      Promise.all([plansApi.list(), racesApi.list(), plansApi.nextSession()])
+        .then(([p, r, ns]) => {
+          if (cancelled) return
+          setPlans(p)
+          setRaces(r)
+          setNextSession(ns)
+          setLoading(false)
+        })
+        .catch(() => {
+          if (cancelled) return
+          // Backend can be briefly unavailable right after a deploy — retry a few times
+          // instead of leaving an already-open tab stuck on an empty dashboard.
+          if (attempt < 3) {
+            setTimeout(() => load(attempt + 1), 2000)
+          } else {
+            setLoading(false)
+          }
+        })
+    }
+
+    load(0)
+    return () => { cancelled = true }
   }, [])
 
   const activePlan = plans.find((p) => p.isActive)
