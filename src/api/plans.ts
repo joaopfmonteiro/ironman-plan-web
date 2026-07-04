@@ -50,7 +50,7 @@ export interface CreateSessionRequest {
   plannedDistanceKm?: number
   intensityZone?: string
   strengthType?: string
-  exercises?: { name: string; sets?: number; reps?: number; weightKg?: number }[]
+  exercises?: { exerciseId: number; sets?: number; reps?: number; weightKg?: number; notes?: string }[]
 }
 
 export interface BulkCreateSessionRequest {
@@ -62,7 +62,7 @@ export interface BulkCreateSessionRequest {
   plannedDistanceKm?: number
   intensityZone?: string
   strengthType?: string
-  exercises?: { name: string; sets?: number; reps?: number; weightKg?: number }[]
+  exercises?: { exerciseId: number; sets?: number; reps?: number; weightKg?: number; notes?: string }[]
 }
 
 export interface UpdateSessionRequest {
@@ -74,7 +74,7 @@ export interface UpdateSessionRequest {
   plannedDistanceKm?: number
   intensityZone?: string
   strengthType?: string
-  exercises?: { name: string; sets?: number; reps?: number; weightKg?: number }[]
+  exercises?: { exerciseId: number; sets?: number; reps?: number; weightKg?: number; notes?: string }[]
 }
 
 export interface CompleteSessionRequest {

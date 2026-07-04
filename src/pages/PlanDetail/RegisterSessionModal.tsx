@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { SessionResponse } from '../../types'
 import { exerciseLogsApi, type ExerciseLogEntryDto } from '../../api/exerciseLogs'
 import { plansApi } from '../../api/plans'
+import { ExercisePicker } from '../../components/ExercisePicker'
 import './RegisterSessionModal.css'
 
 const STRENGTH_TYPES = new Set(['STRENGTH', 'HYROX', 'CROSSFIT'])
@@ -17,6 +18,7 @@ interface LogSet {
 }
 
 interface LogExercise {
+  exerciseId?: number
   exerciseName: string
   orderIndex: number
   notes: string
@@ -48,7 +50,6 @@ export function RegisterSessionModal({ session, onClose, onSaved }: Props) {
   const [rpe, setRpe] = useState('')
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
-  const [knownExercises, setKnownExercises] = useState<string[]>([])
 
   const isStrength = session ? STRENGTH_TYPES.has(session.workoutType) : false
 
@@ -66,14 +67,29 @@ export function RegisterSessionModal({ session, onClose, onSaved }: Props) {
       setDuration(''); setDistance(''); setHeartRate(''); setRpe(''); setNotes('')
     }
 
+    const fromPlan = (): LogExercise[] =>
+      session.exercises && session.exercises.length > 0
+        ? session.exercises.map((ex, i) => ({
+            exerciseId: ex.exerciseId,
+            exerciseName: ex.name,
+            orderIndex: i,
+            notes: '',
+            rpe: undefined,
+            sets: Array.from({ length: ex.sets ?? 1 }, (_, j) =>
+              emptySet(j + 1, ex.reps ?? undefined, ex.weightKg ?? undefined)
+            ),
+          }))
+        : [{ exerciseId: undefined, exerciseName: '', orderIndex: 0, notes: '', rpe: undefined, sets: [emptySet(1)] }]
+
     // Load existing logs or pre-fill from plan
     exerciseLogsApi.get(session.id).then(logs => {
       if (logs.length > 0) {
         // Restore previous log, match with planned if possible
         const planned = session.exercises ?? []
         setExercises(logs.map((log, i) => {
-          const plan = planned.find(p => p.name.toLowerCase() === log.exerciseName.toLowerCase())
+          const plan = planned.find(p => p.exerciseId === log.exerciseId)
           return {
+            exerciseId: log.exerciseId,
             exerciseName: log.exerciseName,
             orderIndex: i,
             notes: log.notes ?? '',
@@ -91,36 +107,12 @@ export function RegisterSessionModal({ session, onClose, onSaved }: Props) {
               : [emptySet(1, plan?.reps, plan?.weightKg)],
           }
         }))
-      } else if (session.exercises && session.exercises.length > 0) {
-        setExercises(session.exercises.map((ex, i) => ({
-          exerciseName: ex.name,
-          orderIndex: i,
-          notes: '',
-          rpe: undefined,
-          sets: Array.from({ length: ex.sets ?? 1 }, (_, j) =>
-            emptySet(j + 1, ex.reps ?? undefined, ex.weightKg ?? undefined)
-          ),
-        })))
       } else {
-        setExercises([{ exerciseName: '', orderIndex: 0, notes: '', rpe: undefined, sets: [emptySet(1)] }])
+        setExercises(fromPlan())
       }
     }).catch(() => {
-      if (session.exercises && session.exercises.length > 0) {
-        setExercises(session.exercises.map((ex, i) => ({
-          exerciseName: ex.name,
-          orderIndex: i,
-          notes: '',
-          rpe: undefined,
-          sets: Array.from({ length: ex.sets ?? 1 }, (_, j) =>
-            emptySet(j + 1, ex.reps ?? undefined, ex.weightKg ?? undefined)
-          ),
-        })))
-      } else {
-        setExercises([{ exerciseName: '', orderIndex: 0, notes: '', rpe: undefined, sets: [emptySet(1)] }])
-      }
+      setExercises(fromPlan())
     })
-
-    exerciseLogsApi.knownExercises().then(setKnownExercises).catch(() => {})
   }, [session])
 
   if (!session) return null
@@ -154,8 +146,11 @@ export function RegisterSessionModal({ session, onClose, onSaved }: Props) {
   const updateExercise = (i: number, field: keyof LogExercise, value: string | number) =>
     setExercises(ex => ex.map((e, idx) => idx === i ? { ...e, [field]: value } : e))
 
+  const selectExercise = (i: number, exercise: { exerciseId: number; name: string }) =>
+    setExercises(ex => ex.map((e, idx) => idx === i ? { ...e, exerciseId: exercise.exerciseId, exerciseName: exercise.name } : e))
+
   const addExercise = () =>
-    setExercises(ex => [...ex, { exerciseName: '', orderIndex: ex.length, notes: '', rpe: undefined, sets: [emptySet(1)] }])
+    setExercises(ex => [...ex, { exerciseId: undefined, exerciseName: '', orderIndex: ex.length, notes: '', rpe: undefined, sets: [emptySet(1)] }])
 
   const removeExercise = (i: number) =>
     setExercises(ex => ex.filter((_, idx) => idx !== i))
@@ -181,9 +176,9 @@ export function RegisterSessionModal({ session, onClose, onSaved }: Props) {
 
       if (isStrength) {
         const validExercises: ExerciseLogEntryDto[] = exercises
-          .filter(e => e.exerciseName.trim())
+          .filter((e): e is LogExercise & { exerciseId: number } => e.exerciseId !== undefined)
           .map((e, i) => ({
-            exerciseName: e.exerciseName.trim(),
+            exerciseId: e.exerciseId,
             orderIndex: i,
             notes: e.notes || undefined,
             sets: e.sets.map(s => ({
@@ -234,16 +229,11 @@ export function RegisterSessionModal({ session, onClose, onSaved }: Props) {
                 <div key={exIdx} className="rsm-exercise">
                   <div className="rsm-exercise__header">
                     <div className="rsm-exercise__name-wrap">
-                      <input
-                        className="rsm-exercise__name"
-                        value={ex.exerciseName}
-                        onChange={e => updateExercise(exIdx, 'exerciseName', e.target.value)}
+                      <ExercisePicker
+                        name={ex.exerciseName}
+                        onSelect={(exercise) => selectExercise(exIdx, exercise)}
                         placeholder="Nome do exercício"
-                        list={`ex-list-${exIdx}`}
                       />
-                      <datalist id={`ex-list-${exIdx}`}>
-                        {knownExercises.map(n => <option key={n} value={n} />)}
-                      </datalist>
                     </div>
                     {exercises.length > 1 && (
                       <button className="rsm-exercise__remove" onClick={() => removeExercise(exIdx)} title="Remover exercício">

@@ -4,6 +4,8 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine,
 } from 'recharts'
 import { exerciseLogsApi, type ExerciseLogResponse } from '../../api/exerciseLogs'
+import { exercisesApi } from '../../api/exercises'
+import type { ExerciseResponse } from '../../types'
 import './Progress.css'
 
 function formatDate(iso: string) {
@@ -17,26 +19,26 @@ function calcVolume(log: ExerciseLogResponse) {
 }
 
 export function ProgressPage() {
-  const [knownExercises, setKnownExercises] = useState<string[]>([])
+  const [catalog, setCatalog] = useState<ExerciseResponse[]>([])
   const [search, setSearch] = useState('')
-  const [selected, setSelected] = useState<string | null>(null)
+  const [selected, setSelected] = useState<ExerciseResponse | null>(null)
   const [history, setHistory] = useState<ExerciseLogResponse[]>([])
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    exerciseLogsApi.knownExercises().then(setKnownExercises).catch(() => {})
+    exercisesApi.list().then(setCatalog).catch(() => {})
   }, [])
 
-  const filtered = knownExercises.filter(e =>
-    e.toLowerCase().includes(search.toLowerCase())
+  const filtered = catalog.filter(e =>
+    e.name.toLowerCase().includes(search.toLowerCase())
   )
 
-  const selectExercise = async (name: string) => {
-    setSelected(name)
-    setSearch(name)
+  const selectExercise = async (exercise: ExerciseResponse) => {
+    setSelected(exercise)
+    setSearch(exercise.name)
     setLoading(true)
     try {
-      const data = await exerciseLogsApi.history(name)
+      const data = await exerciseLogsApi.history(exercise.id)
       setHistory(data.slice().reverse()) // oldest first for charts
     } finally {
       setLoading(false)
@@ -95,9 +97,9 @@ export function ProgressPage() {
 
         {showDropdown && (
           <div className="progress-dropdown">
-            {filtered.map(name => (
-              <button key={name} className="progress-dropdown-item" onClick={() => selectExercise(name)}>
-                {name}
+            {filtered.map(exercise => (
+              <button key={exercise.id} className="progress-dropdown-item" onClick={() => selectExercise(exercise)}>
+                {exercise.name}
               </button>
             ))}
           </div>
@@ -107,7 +109,7 @@ export function ProgressPage() {
       {/* Empty state */}
       {!selected && (
         <div className="progress-empty">
-          {knownExercises.length === 0 ? (
+          {catalog.length === 0 ? (
             <>
               <p className="progress-empty__icon">💪</p>
               <h2>Sem dados ainda</h2>
@@ -117,11 +119,11 @@ export function ProgressPage() {
             <>
               <p className="progress-empty__icon">🔍</p>
               <h2>Escolhe um exercício</h2>
-              <p>Tens {knownExercises.length} exercício{knownExercises.length !== 1 ? 's' : ''} registado{knownExercises.length !== 1 ? 's' : ''}.</p>
+              <p>Pesquisa por nome para ver o histórico e a evolução do 1RM.</p>
               <div className="progress-exercise-chips">
-                {knownExercises.slice(0, 8).map(name => (
-                  <button key={name} className="progress-chip" onClick={() => selectExercise(name)}>
-                    {name}
+                {catalog.slice(0, 8).map(exercise => (
+                  <button key={exercise.id} className="progress-chip" onClick={() => selectExercise(exercise)}>
+                    {exercise.name}
                   </button>
                 ))}
               </div>
@@ -271,7 +273,7 @@ export function ProgressPage() {
       {selected && !loading && history.length === 0 && (
         <div className="progress-empty">
           <p className="progress-empty__icon">📭</p>
-          <h2>Sem sessões para "{selected}"</h2>
+          <h2>Sem sessões para "{selected.name}"</h2>
           <p>Regista um treino com este exercício para ver a evolução.</p>
         </div>
       )}

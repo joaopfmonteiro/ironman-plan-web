@@ -3,6 +3,7 @@ import { plansApi } from '../../api/plans'
 import { workoutTemplatesApi } from '../../api/workoutTemplates'
 import type { MicrocycleResponse, SessionExercise, SessionResponse, WorkoutTemplate } from '../../types'
 import { toLocalISODate } from '../../utils/date'
+import { ExercisePicker } from '../../components/ExercisePicker'
 import './BulkSessionModal.css'
 
 const WORKOUT_TYPES = [
@@ -36,7 +37,7 @@ const DAY_LABELS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
 const ENDURANCE_TYPES = new Set(['SWIM', 'BIKE', 'RUN', 'BRICK'])
 const STRENGTH_WORKOUT_TYPES = new Set(['STRENGTH', 'HYROX', 'CROSSFIT'])
 
-const emptyExercise = (): SessionExercise => ({ name: '', sets: undefined, reps: undefined, weightKg: undefined })
+const emptyExercise = (): SessionExercise => ({ exerciseId: undefined, name: '', sets: undefined, reps: undefined, weightKg: undefined })
 
 const toISO = toLocalISODate
 
@@ -151,15 +152,18 @@ export function BulkSessionModal({ open, micro, existingSessions, onClose, onCre
       strengthType: t.strengthType || f.strengthType,
     }))
     if (t.exercises?.length) {
-      setExercises(t.exercises.map(e => ({ name: e.name, sets: e.sets, reps: e.reps, weightKg: e.weightKg })))
+      setExercises(t.exercises.map(e => ({ exerciseId: e.exerciseId, name: e.name, sets: e.sets, reps: e.reps, weightKg: e.weightKg })))
     }
     setShowTpl(false)
   }
 
   const updateEx = (i: number, field: keyof SessionExercise, value: string) => {
     setExercises(prev => prev.map((ex, idx) =>
-      idx === i ? { ...ex, [field]: field === 'name' || field === 'notes' ? value : (value === '' ? undefined : Number(value)) } : ex
+      idx === i ? { ...ex, [field]: field === 'notes' ? value : (value === '' ? undefined : Number(value)) } : ex
     ))
+  }
+  const selectEx = (i: number, exercise: { exerciseId: number; name: string }) => {
+    setExercises(prev => prev.map((ex, idx) => idx === i ? { ...ex, ...exercise } : ex))
   }
 
   const handleClose = () => { setSaving(false); onClose() }
@@ -177,7 +181,9 @@ export function BulkSessionModal({ open, micro, existingSessions, onClose, onCre
         plannedDistanceKm: form.plannedDistanceKm ? Number(form.plannedDistanceKm) : undefined,
         intensityZone: form.intensityZone || undefined,
         strengthType: form.strengthType || undefined,
-        exercises: isStrength ? exercises.filter(ex => ex.name.trim()) : [],
+        exercises: isStrength
+          ? exercises.filter((ex): ex is SessionExercise & { exerciseId: number } => ex.exerciseId !== undefined)
+          : [],
       })
       onClose()
       onCreated(micro.id, sessions)
@@ -289,7 +295,7 @@ export function BulkSessionModal({ open, micro, existingSessions, onClose, onCre
                   </div>
                   {exercises.map((ex, i) => (
                     <div key={i} className="bsm-ex-row">
-                      <input className="bsm-input" placeholder="Exercício" value={ex.name} onChange={e => updateEx(i, 'name', e.target.value)} />
+                      <ExercisePicker name={ex.name} onSelect={(exercise) => selectEx(i, exercise)} />
                       <input className="bsm-input bsm-ex-num" type="number" placeholder="4" min="1" value={ex.sets ?? ''} onChange={e => updateEx(i, 'sets', e.target.value)} />
                       <input className="bsm-input bsm-ex-num" type="number" placeholder="10" min="1" value={ex.reps ?? ''} onChange={e => updateEx(i, 'reps', e.target.value)} />
                       <input className="bsm-input bsm-ex-num" type="number" placeholder="80" min="0" step="0.5" value={ex.weightKg ?? ''} onChange={e => updateEx(i, 'weightKg', e.target.value)} />

@@ -77,6 +77,22 @@ export interface CreateRaceRequest {
   notes?: string
 }
 
+// --- Exercise catalog ---
+export type MuscleGroup =
+  | 'CHEST' | 'BACK' | 'SHOULDERS' | 'BICEPS' | 'TRICEPS' | 'FOREARMS'
+  | 'QUADRICEPS' | 'HAMSTRINGS' | 'GLUTES' | 'CALVES' | 'ABS' | 'FULL_BODY' | 'CARDIO'
+
+export type Equipment =
+  | 'BARBELL' | 'DUMBBELL' | 'MACHINE' | 'CABLE' | 'BODYWEIGHT'
+  | 'KETTLEBELL' | 'BAND' | 'SMITH_MACHINE' | 'OTHER'
+
+export interface ExerciseResponse {
+  id: number
+  name: string
+  muscleGroup?: MuscleGroup
+  equipment?: Equipment
+}
+
 // --- Session ---
 export interface SessionResultResponse {
   id: number
@@ -91,6 +107,7 @@ export interface SessionResultResponse {
 export interface SessionExercise {
   id?: number
   orderIndex?: number
+  exerciseId?: number
   name: string
   sets?: number
   reps?: number
@@ -119,6 +136,7 @@ export interface SessionResponse {
 export interface WorkoutTemplateExercise {
   id?: number
   orderIndex?: number
+  exerciseId?: number
   name: string
   sets?: number
   reps?: number

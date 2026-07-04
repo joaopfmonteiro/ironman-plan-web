@@ -9,7 +9,7 @@ export interface ExerciseSetLogDto {
 }
 
 export interface ExerciseLogEntryDto {
-  exerciseName: string
+  exerciseId: number
   orderIndex: number
   notes?: string
   sets: ExerciseSetLogDto[]
@@ -31,6 +31,7 @@ export interface ExerciseSetLogResponse {
 
 export interface ExerciseLogResponse {
   id: number
+  exerciseId: number
   exerciseName: string
   orderIndex: number
   notes?: string
@@ -46,9 +47,6 @@ export const exerciseLogsApi = {
   get: (sessionId: number) =>
     client.get<ExerciseLogResponse[]>(`/sessions/${sessionId}/exercise-logs`).then(r => r.data),
 
-  history: (exercise: string) =>
-    client.get<ExerciseLogResponse[]>(`/exercise-logs/history`, { params: { exercise } }).then(r => r.data),
-
-  knownExercises: () =>
-    client.get<string[]>(`/exercise-logs/exercises`).then(r => r.data),
+  history: (exerciseId: number) =>
+    client.get<ExerciseLogResponse[]>(`/exercise-logs/history`, { params: { exerciseId } }).then(r => r.data),
 }

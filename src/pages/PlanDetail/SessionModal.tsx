@@ -3,6 +3,7 @@ import { plansApi } from '../../api/plans'
 import { workoutTemplatesApi } from '../../api/workoutTemplates'
 import type { SessionExercise, SessionResponse, WorkoutTemplate } from '../../types'
 import { toLocalISODate } from '../../utils/date'
+import { ExercisePicker } from '../../components/ExercisePicker'
 import './SessionModal.css'
 
 const WORKOUT_TYPES = [
@@ -36,7 +37,7 @@ const ENDURANCE_TYPES = new Set(['SWIM', 'BIKE', 'RUN', 'BRICK'])
 const STRENGTH_WORKOUT_TYPES = new Set(['STRENGTH', 'HYROX', 'CROSSFIT'])
 
 const today = () => toLocalISODate()
-const emptyExercise = (): SessionExercise => ({ name: '', sets: undefined, reps: undefined, weightKg: undefined })
+const emptyExercise = (): SessionExercise => ({ exerciseId: undefined, name: '', sets: undefined, reps: undefined, weightKg: undefined })
 
 interface Props {
   open: boolean
@@ -126,7 +127,7 @@ export function SessionModal({ open, microId, editSession, onClose, onSaved }: P
       strengthType: t.strengthType || f.strengthType,
     }))
     if (t.exercises?.length) {
-      setExercises(t.exercises.map(e => ({ name: e.name, sets: e.sets, reps: e.reps, weightKg: e.weightKg })))
+      setExercises(t.exercises.map(e => ({ exerciseId: e.exerciseId, name: e.name, sets: e.sets, reps: e.reps, weightKg: e.weightKg })))
     }
     setShowTemplates(false)
   }
@@ -150,7 +151,11 @@ export function SessionModal({ open, microId, editSession, onClose, onSaved }: P
         plannedDurationMinutes: form.plannedDurationMinutes ? Number(form.plannedDurationMinutes) : undefined,
         plannedDistanceKm: form.plannedDistanceKm ? Number(form.plannedDistanceKm) : undefined,
         intensityZone: form.intensityZone as any || undefined,
-        exercises: isStrength ? exercises.filter(ex => ex.name.trim()).map((ex, i) => ({ ...ex, orderIndex: i })) : [],
+        exercises: isStrength
+          ? exercises
+              .filter((ex): ex is SessionExercise & { exerciseId: number } => ex.exerciseId !== undefined)
+              .map((ex, i) => ({ ...ex, orderIndex: i }))
+          : [],
       })
       setTemplates((prev) => [...prev, t].sort((a, b) => a.name.localeCompare(b.name)))
       setShowSaveTemplate(false)
@@ -163,8 +168,11 @@ export function SessionModal({ open, microId, editSession, onClose, onSaved }: P
   // Exercise builder helpers
   const updateEx = (i: number, field: keyof SessionExercise, value: string) => {
     setExercises((prev) => prev.map((ex, idx) =>
-      idx === i ? { ...ex, [field]: field === 'name' || field === 'notes' ? value : (value === '' ? undefined : Number(value)) } : ex
+      idx === i ? { ...ex, [field]: field === 'notes' ? value : (value === '' ? undefined : Number(value)) } : ex
     ))
+  }
+  const selectEx = (i: number, exercise: { exerciseId: number; name: string }) => {
+    setExercises((prev) => prev.map((ex, idx) => idx === i ? { ...ex, ...exercise } : ex))
   }
   const addEx = () => setExercises((prev) => [...prev, emptyExercise()])
   const removeEx = (i: number) => setExercises((prev) => prev.filter((_, idx) => idx !== i))
@@ -185,7 +193,9 @@ export function SessionModal({ open, microId, editSession, onClose, onSaved }: P
         plannedDistanceKm: form.plannedDistanceKm ? Number(form.plannedDistanceKm) : undefined,
         intensityZone: form.intensityZone || undefined,
         strengthType: form.strengthType || undefined,
-        exercises: isStrength ? exercises.filter((ex) => ex.name.trim()) : [],
+        exercises: isStrength
+          ? exercises.filter((ex): ex is SessionExercise & { exerciseId: number } => ex.exerciseId !== undefined)
+          : [],
       }
       if (editSession) {
         await plansApi.updateSession(editSession.id, payload)
@@ -344,11 +354,10 @@ export function SessionModal({ open, microId, editSession, onClose, onSaved }: P
                   </div>
                   {exercises.map((ex, i) => (
                     <div key={i} className="sm-ex-row">
-                      <input
-                        className="sm-input sm-ex-name"
-                        placeholder="Ex: Supino plano"
-                        value={ex.name}
-                        onChange={(e) => updateEx(i, 'name', e.target.value)}
+                      <ExercisePicker
+                        className="sm-ex-name"
+                        name={ex.name}
+                        onSelect={(exercise) => selectEx(i, exercise)}
                       />
                       <input className="sm-input sm-ex-num" type="number" placeholder="4" min="1" value={ex.sets ?? ''} onChange={(e) => updateEx(i, 'sets', e.target.value)} />
                       <input className="sm-input sm-ex-num" type="number" placeholder="10" min="1" value={ex.reps ?? ''} onChange={(e) => updateEx(i, 'reps', e.target.value)} />
