@@ -3,6 +3,8 @@ import { Layout } from './components/Layout'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { LoginPage } from './pages/Login'
 import { RegisterPage } from './pages/Register'
+import { ForgotPasswordPage } from './pages/ForgotPassword'
+import { ResetPasswordPage } from './pages/ResetPassword'
 import { SetupPage } from './pages/Setup'
 import { ProfilePage } from './pages/Profile'
 import { DashboardPage } from './pages/Dashboard'
@@ -28,6 +30,8 @@ export default function App() {
         {/* Public */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/setup" element={<SetupPage />} />
 
         {/* Protected — Layout provides the <Outlet /> */}

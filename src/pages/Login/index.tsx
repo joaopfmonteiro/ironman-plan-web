@@ -86,6 +86,8 @@ export function LoginPage() {
               </button>
             </div>
 
+            <Link to="/forgot-password" className="login-forgot-link">Esqueceste-te da password?</Link>
+
             {error && <p className="login-error">{error}</p>}
 
             <button type="submit" disabled={loading} className="login-btn">
