@@ -37,8 +37,9 @@ const STRENGTH_WORKOUT_TYPES = new Set(['STRENGTH', 'HYROX', 'CROSSFIT'])
 
 const emptyExercise = (): SessionExercise => ({ name: '', sets: undefined, reps: undefined, weightKg: undefined })
 
-/** Returns YYYY-MM-DD string for a Date */
-const toISO = (d: Date) => d.toISOString().slice(0, 10)
+/** Returns YYYY-MM-DD string for a Date, using local date components (avoids UTC day-shift) */
+const toISO = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 
 /** Day-of-week index Monday=0 … Sunday=6 */
 const dow = (d: Date) => (d.getDay() + 6) % 7
