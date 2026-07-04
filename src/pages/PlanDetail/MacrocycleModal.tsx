@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { plansApi } from '../../api/plans'
 import type { MacrocycleResponse } from '../../types'
+import { toLocalISODate } from '../../utils/date'
 import './MacrocycleModal.css'
 
 const MACRO_TYPES = [
@@ -11,7 +12,7 @@ const MACRO_TYPES = [
   { value: 'RECOVERY', label: 'Recuperação' },
 ]
 
-const today = () => new Date().toISOString().slice(0, 10)
+const today = () => toLocalISODate()
 
 interface Props {
   open: boolean

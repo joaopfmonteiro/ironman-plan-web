@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { weightApi } from '../../api/weight'
 import { athleteApi } from '../../api/athlete'
 import type { WeightEntryResponse, AthleteResponse } from '../../types'
+import { toLocalISODate } from '../../utils/date'
 import './WeightPage.css'
 
 const W = 700
@@ -94,7 +95,7 @@ export function WeightPage() {
   const [period, setPeriod]         = useState<Period>('1M')
 
   // Add form
-  const [addDate, setAddDate]   = useState(() => new Date().toISOString().slice(0, 10))
+  const [addDate, setAddDate]   = useState(() => toLocalISODate())
   const [addKg, setAddKg]       = useState('')
   const [saving, setSaving]     = useState(false)
 
@@ -160,7 +161,7 @@ export function WeightPage() {
   const periodEnd   = new Date()
   const startMs     = periodStart.getTime()
   const endMs       = periodEnd.getTime()
-  const startStr    = periodStart.toISOString().slice(0, 10)
+  const startStr    = toLocalISODate(periodStart)
   const entries     = allEntries.filter((e) => e.date >= startStr)
 
   const kgs   = entries.map((e) => e.weightKg)
@@ -171,7 +172,7 @@ export function WeightPage() {
   const yTicks = Array.from({ length: 5 }, (_, i) => minKg + (range / 4) * i)
 
   // Extend line to today if last entry is in the past
-  const todayStr = new Date().toISOString().slice(0, 10)
+  const todayStr = toLocalISODate()
   const lastEntry = entries[entries.length - 1]
   const chartEntries = entries.length > 0 && lastEntry.date < todayStr
     ? [...entries, { ...lastEntry, date: todayStr, id: -1 }]
@@ -247,7 +248,7 @@ export function WeightPage() {
             )
           })}
           {xTicks.map((tick, i) => {
-            const x = dateToX(tick.toISOString().slice(0, 10), startMs, endMs)
+            const x = dateToX(toLocalISODate(tick), startMs, endMs)
             return (
               <g key={i} className="weight-x-tick">
                 <line x1={x} y1={PT} x2={x} y2={PT + IH} stroke="#f8fafc" strokeWidth="1" />

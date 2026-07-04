@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { plansApi } from '../../api/plans'
 import type { MicrocycleResponse } from '../../types'
+import { toLocalISODate } from '../../utils/date'
 import './MicrocycleModal.css'
 
 const MICRO_FOCUS = [
@@ -10,7 +11,7 @@ const MICRO_FOCUS = [
   { value: 'TEST',      label: 'Teste' },
 ]
 
-const today = () => new Date().toISOString().slice(0, 10)
+const today = () => toLocalISODate()
 
 interface Props {
   open: boolean
@@ -24,9 +25,9 @@ interface Props {
 }
 
 function addDay(dateStr: string): string {
-  const d = new Date(dateStr)
+  const d = new Date(dateStr + 'T00:00:00')
   d.setDate(d.getDate() + 1)
-  return d.toISOString().slice(0, 10)
+  return toLocalISODate(d)
 }
 
 export function MicrocycleModal({ open, macroId, editMicro, macroStartDate, macroEndDate, siblingMicros = [], onClose, onSaved }: Props) {

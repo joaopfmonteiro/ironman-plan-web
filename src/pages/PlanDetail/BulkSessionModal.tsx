@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { plansApi } from '../../api/plans'
 import { workoutTemplatesApi } from '../../api/workoutTemplates'
 import type { MicrocycleResponse, SessionExercise, SessionResponse, WorkoutTemplate } from '../../types'
+import { toLocalISODate } from '../../utils/date'
 import './BulkSessionModal.css'
 
 const WORKOUT_TYPES = [
@@ -37,8 +38,7 @@ const STRENGTH_WORKOUT_TYPES = new Set(['STRENGTH', 'HYROX', 'CROSSFIT'])
 
 const emptyExercise = (): SessionExercise => ({ name: '', sets: undefined, reps: undefined, weightKg: undefined })
 
-/** Returns YYYY-MM-DD string for a Date */
-const toISO = (d: Date) => d.toISOString().slice(0, 10)
+const toISO = toLocalISODate
 
 /** Day-of-week index Monday=0 … Sunday=6 */
 const dow = (d: Date) => (d.getDay() + 6) % 7

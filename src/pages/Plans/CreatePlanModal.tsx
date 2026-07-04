@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { plansApi } from '../../api/plans'
 import type { RaceResponse } from '../../types'
+import { toLocalISODate } from '../../utils/date'
 import './CreatePlanModal.css'
 
 interface Props {
@@ -11,7 +12,7 @@ interface Props {
 }
 
 export function CreatePlanModal({ open, races, onClose, onCreated }: Props) {
-  const [form, setForm] = useState({ name: '', description: '', startDate: new Date().toISOString().slice(0, 10), endDate: '', targetRaceId: '' })
+  const [form, setForm] = useState({ name: '', description: '', startDate: toLocalISODate(), endDate: '', targetRaceId: '' })
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -26,7 +27,7 @@ export function CreatePlanModal({ open, races, onClose, onCreated }: Props) {
     setForm((f) => ({ ...f, [field]: e.target.value }))
 
   const handleClose = () => {
-    setForm({ name: '', description: '', startDate: new Date().toISOString().slice(0, 10), endDate: '', targetRaceId: '' })
+    setForm({ name: '', description: '', startDate: toLocalISODate(), endDate: '', targetRaceId: '' })
     onClose()
   }
 
