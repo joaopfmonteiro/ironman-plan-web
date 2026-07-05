@@ -82,9 +82,31 @@ export interface WorkoutTypeBreakdown {
   percentage: number
 }
 
+export interface ExerciseFrequency {
+  exerciseId: number
+  exerciseName: string
+  muscleGroup?: string
+  sessionCount: number
+  totalSets: number
+}
+
+export interface MuscleGroupBreakdown {
+  muscleGroup: string
+  sessionCount: number
+  totalSets: number
+}
+
+export interface StrengthStats {
+  totalStrengthSessions: number
+  totalSets: number
+  topExercises: ExerciseFrequency[]
+  muscleGroups: MuscleGroupBreakdown[]
+}
+
 export interface PlanStatsResponse {
   overall: WorkoutTypeBreakdown[]
-  byMacrocycle: { macrocycleId: number; macrocycleName: string; breakdown: WorkoutTypeBreakdown[] }[]
+  strengthOverall: StrengthStats
+  byMacrocycle: { macrocycleId: number; macrocycleName: string; breakdown: WorkoutTypeBreakdown[]; strength: StrengthStats }[]
 }
 
 export interface UpdateSessionRequest {

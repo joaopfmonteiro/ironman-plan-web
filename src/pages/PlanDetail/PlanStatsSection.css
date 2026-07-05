@@ -120,8 +120,124 @@
   border-bottom: none;
 }
 
+.pss__strength {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.pss__strength-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 0.875rem;
+}
+
+.pss__quick-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.pss__quick-stat {
+  background: #f8fafc;
+  border-radius: 0.625rem;
+  padding: 0.65rem 0.875rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.pss__quick-stat-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pss__quick-stat-label {
+  font-size: 0.68rem;
+  color: #94a3b8;
+}
+
+.pss__strength-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.pss__strength-card {
+  min-width: 0;
+}
+
+.pss__strength-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.pss__strength-card-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #334155;
+  margin: 0 0 0.5rem;
+}
+
+.pss__strength-card-header .pss__strength-card-title {
+  margin: 0;
+}
+
+.pss__metric-toggle {
+  display: flex;
+  background: #f1f5f9;
+  border-radius: 0.4rem;
+  padding: 0.1rem;
+}
+
+.pss__metric-btn {
+  padding: 0.2rem 0.5rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #64748b;
+  background: none;
+  border: none;
+  border-radius: 0.3rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.pss__metric-btn--active {
+  background: #fff;
+  color: #0f172a;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+}
+
+.pss__muscle-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  margin-top: 0.5rem;
+  justify-content: center;
+}
+
+.pss__muscle-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.68rem;
+  color: #64748b;
+}
+
 @media (max-width: 640px) {
   .pss__content {
+    grid-template-columns: 1fr;
+  }
+
+  .pss__strength-grid {
     grid-template-columns: 1fr;
   }
 }
