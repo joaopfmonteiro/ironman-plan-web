@@ -65,6 +65,28 @@ export interface BulkCreateSessionRequest {
   exercises?: { exerciseId: number; sets?: number; reps?: number; weightKg?: number; notes?: string }[]
 }
 
+export interface BulkCreateSessionResponse {
+  created: SessionResponse[]
+  skippedDates: string[]
+}
+
+export interface GenerateMicrocyclesRequest {
+  blocks: { weeks: number; focus: string }[]
+}
+
+export interface WorkoutTypeBreakdown {
+  workoutType: string
+  sessionCount: number
+  totalPlannedMinutes: number
+  totalActualMinutes: number
+  percentage: number
+}
+
+export interface PlanStatsResponse {
+  overall: WorkoutTypeBreakdown[]
+  byMacrocycle: { macrocycleId: number; macrocycleName: string; breakdown: WorkoutTypeBreakdown[] }[]
+}
+
 export interface UpdateSessionRequest {
   date?: string
   workoutType?: string
@@ -132,11 +154,20 @@ export const plansApi = {
   deleteMicrocycle: (id: number) =>
     client.delete(`/microcycles/${id}`),
 
+  generateMicrocycles: (macrocycleId: number, data: GenerateMicrocyclesRequest) =>
+    client.post<MicrocycleResponse[]>(`/macrocycles/${macrocycleId}/microcycles/generate`, data).then((r) => r.data),
+
+  getPlanStats: (planId: number) =>
+    client.get<PlanStatsResponse>(`/plans/${planId}/stats`).then((r) => r.data),
+
   // Next upcoming session across all plans
   nextSession: () =>
     client.get<SessionResponse>('/sessions/next').then((r) => r.data).catch(() => null),
 
   // Sessions
+  getSession: (id: number) =>
+    client.get<SessionResponse>(`/sessions/${id}`).then((r) => r.data),
+
   getSessions: (microcycleId: number) =>
     client.get<SessionResponse[]>(`/microcycles/${microcycleId}/sessions`).then((r) => r.data),
 
@@ -145,6 +176,9 @@ export const plansApi = {
 
   bulkCreateSessions: (microcycleId: number, data: BulkCreateSessionRequest) =>
     client.post<SessionResponse[]>(`/microcycles/${microcycleId}/sessions/bulk`, data).then((r) => r.data),
+
+  bulkCreateSessionsForMacro: (macrocycleId: number, data: BulkCreateSessionRequest) =>
+    client.post<BulkCreateSessionResponse>(`/macrocycles/${macrocycleId}/sessions/bulk`, data).then((r) => r.data),
 
   updateSession: (id: number, data: UpdateSessionRequest) =>
     client.put<SessionResponse>(`/sessions/${id}`, data).then((r) => r.data),

@@ -1,0 +1,66 @@
+.gmm-blocks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.gmm-block-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.gmm-block-weeks {
+  width: 4.5rem;
+  flex: none;
+  text-align: center;
+}
+
+.gmm-block-label {
+  font-size: 0.82rem;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.gmm-block-focus {
+  flex: 1;
+}
+
+.gmm-block-remove {
+  flex: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: none;
+  border-radius: 0.4rem;
+  background: #f1f5f9;
+  color: #94a3b8;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.gmm-block-remove:hover:not(:disabled) {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.gmm-block-remove:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.gmm-add-block {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #f97316;
+  cursor: pointer;
+  padding: 0.25rem 0;
+  font-family: inherit;
+}
+
+.gmm-add-block:hover {
+  color: #ea6c0a;
+}

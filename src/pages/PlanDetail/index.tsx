@@ -11,10 +11,13 @@ import { Button } from '../../components/ui/Button'
 import { Badge } from '../../components/ui/Badge'
 import { MacrocycleModal } from './MacrocycleModal'
 import { MicrocycleModal } from './MicrocycleModal'
+import { GenerateMicrocyclesModal } from './GenerateMicrocyclesModal'
 import { SessionModal } from './SessionModal'
-import { BulkSessionModal } from './BulkSessionModal'
+import { BulkSessionModal, type BulkScope } from './BulkSessionModal'
 import { SessionViewModal } from './SessionViewModal'
 import { RegisterSessionModal } from './RegisterSessionModal'
+import { PlanStatsSection } from './PlanStatsSection'
+import { toLocalISODate } from '../../utils/date'
 import './PlanDetailPage.css'
 
 // ---- Helpers ----
@@ -22,6 +25,25 @@ import './PlanDetailPage.css'
 function formatDate(d?: string) {
   if (!d) return '—'
   return new Date(d).toLocaleDateString('pt-PT', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
+const DAY_LABELS_FULL = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo']
+
+/** Day-of-week index Monday=0 … Sunday=6 */
+function dow(d: Date) {
+  return (d.getDay() + 6) % 7
+}
+
+/** All days in [startISO, endISO] inclusive */
+function daysInRange(startISO: string, endISO: string): Date[] {
+  const result: Date[] = []
+  const cur = new Date(startISO + 'T00:00:00')
+  const end = new Date(endISO + 'T00:00:00')
+  while (cur <= end) {
+    result.push(new Date(cur))
+    cur.setDate(cur.getDate() + 1)
+  }
+  return result
 }
 
 
@@ -77,7 +99,10 @@ export function PlanDetailPage() {
   const [activeMicroId, setActiveMicroId] = useState<number | null>(null)
 
   const [bulkModal, setBulkModal] = useState(false)
-  const [bulkMicro, setBulkMicro] = useState<MicrocycleResponse | null>(null)
+  const [bulkScope, setBulkScope] = useState<BulkScope | null>(null)
+
+  const [generateModal, setGenerateModal] = useState(false)
+  const [generateMacroId, setGenerateMacroId] = useState<number | null>(null)
 
   const [viewSession, setViewSession] = useState<SessionResponse | null>(null)
   const [registerSession, setRegisterSession] = useState<SessionResponse | null>(null)
@@ -164,7 +189,31 @@ export function PlanDetailPage() {
     setSessionsMap((m) => ({ ...m, [microId]: sessions }))
   }
 
-  const openBulkCreate = (micro: MicrocycleResponse) => { setBulkMicro(micro); setBulkModal(true) }
+  const openBulkCreate = (micro: MicrocycleResponse) => { setBulkScope({ level: 'micro', micro }); setBulkModal(true) }
+  const openBulkCreateMacro = (macro: MacrocycleResponse) => {
+    setBulkScope({
+      level: 'macro',
+      macroId: macro.id,
+      macroName: macro.name,
+      macroStartDate: macro.startDate,
+      macroEndDate: macro.endDate,
+      microcycles: macro.microcycles,
+    })
+    setBulkModal(true)
+  }
+  const openGenerateMicros = (macroId: number) => { setGenerateMacroId(macroId); setGenerateModal(true) }
+
+  const handleBulkCreated = async (microIds: number[]) => {
+    const entries = await Promise.all(
+      microIds.map(async (mid) => [mid, await plansApi.getSessions(mid)] as const)
+    )
+    setSessionsMap((m) => {
+      const nm = { ...m }
+      for (const [mid, sessions] of entries) nm[mid] = sessions
+      return nm
+    })
+    refreshPlan()
+  }
 
   const deleteSession = async (s: SessionResponse) => {
     if (!confirm('Eliminar sessão?')) return
@@ -221,6 +270,8 @@ export function PlanDetailPage() {
         </Button>
       </div>
 
+      <PlanStatsSection planId={planId} />
+
       {/* Macrocycles */}
       {plan.macrocycles.length === 0 ? (
         <div className="plan-detail-empty">
@@ -247,6 +298,8 @@ export function PlanDetailPage() {
               onEditMicro={(m) => openEditMicro(m, macro)}
               onDeleteMicro={(m) => deleteMicro(m.id)}
               onBulkCreateSession={openBulkCreate}
+              onBulkCreateMacro={openBulkCreateMacro}
+              onGenerateMicros={openGenerateMicros}
               onViewSession={(s) => setViewSession(s)}
               onEditSession={openEditSession}
               onDeleteSession={deleteSession}
@@ -274,6 +327,13 @@ export function PlanDetailPage() {
         onSaved={refreshPlan}
       />
 
+      <GenerateMicrocyclesModal
+        open={generateModal}
+        macroId={generateMacroId}
+        onClose={() => setGenerateModal(false)}
+        onGenerated={refreshPlan}
+      />
+
       <SessionModal
         open={sessionModal}
         microId={activeMicroId}
@@ -284,10 +344,16 @@ export function PlanDetailPage() {
 
       <BulkSessionModal
         open={bulkModal}
-        micro={bulkMicro}
-        existingSessions={bulkMicro ? (sessionsMap[bulkMicro.id] ?? []) : []}
+        scope={bulkScope}
+        existingSessions={
+          !bulkScope
+            ? []
+            : bulkScope.level === 'micro'
+              ? sessionsMap[bulkScope.micro.id] ?? []
+              : bulkScope.microcycles.flatMap((m) => sessionsMap[m.id] ?? [])
+        }
         onClose={() => setBulkModal(false)}
-        onCreated={handleSessionSaved}
+        onCreated={handleBulkCreated}
       />
 
       <SessionViewModal
@@ -329,6 +395,8 @@ interface MacroProps {
   onEditMicro: (m: MicrocycleResponse, macro: MacrocycleResponse) => void
   onDeleteMicro: (m: MicrocycleResponse) => void
   onBulkCreateSession: (micro: MicrocycleResponse) => void
+  onBulkCreateMacro: (macro: MacrocycleResponse) => void
+  onGenerateMicros: (macroId: number) => void
   onViewSession: (s: SessionResponse) => void
   onEditSession: (s: SessionResponse) => void
   onDeleteSession: (s: SessionResponse) => void
@@ -381,6 +449,26 @@ function MacrocycleBlock({ macro, expanded, onToggle, ...rest }: MacroProps) {
           {macro.goals && (
             <p className="macro-block__goals">"{macro.goals}"</p>
           )}
+
+          <div className="macro-block__quick-actions">
+            <button onClick={() => rest.onGenerateMicros(macro.id)} className="micro-header__add">
+              <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              Gerar semanas automaticamente
+            </button>
+            <button
+              onClick={() => rest.onBulkCreateMacro(macro)}
+              className="micro-header__add"
+              disabled={macro.microcycles.length === 0}
+              title={macro.microcycles.length === 0 ? 'Cria semanas primeiro' : undefined}
+            >
+              <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 4v5h.582M20 20v-5h-.581M5.5 9A7.5 7.5 0 0119.5 9M18.5 15a7.5 7.5 0 01-14 0" />
+              </svg>
+              Repetir sessão no macrociclo
+            </button>
+          </div>
 
           <div className="micro-header">
             <p className="micro-header__label">Microciclos</p>
@@ -501,20 +589,50 @@ function MicrocycleBlock({
             <div className="sessions-loading">
               <div className="sessions-spinner" />
             </div>
-          ) : !sessions || sessions.length === 0 ? (
-            <p className="sessions-empty">Sem sessões. Adiciona um treino.</p>
           ) : (
-            <div className="sessions-list">
-              {sessions.sort((a, b) => a.date.localeCompare(b.date)).map((session) => (
-                <SessionRow
-                  key={session.id}
-                  session={session}
-                  onView={() => onViewSession(session)}
-                  onEdit={() => onEditSession(session)}
-                  onDelete={() => onDeleteSession(session)}
-                />
-              ))}
-            </div>
+            (() => {
+              const sessionsByDate = new Map<string, SessionResponse[]>()
+              ;(sessions ?? []).forEach((s) => {
+                const list = sessionsByDate.get(s.date) ?? []
+                list.push(s)
+                sessionsByDate.set(s.date, list)
+              })
+              const weekDays = daysInRange(micro.startDate, micro.endDate)
+              return (
+                <div className="sessions-by-day">
+                  {(!sessions || sessions.length === 0) && (
+                    <p className="sessions-empty">Sem sessões. Adiciona um treino.</p>
+                  )}
+                  {weekDays.map((day) => {
+                    const iso = toLocalISODate(day)
+                    const daySessions = sessionsByDate.get(iso) ?? []
+                    return (
+                      <div key={iso} className="session-day">
+                        <div className="session-day__header">
+                          <span className="session-day__name">{DAY_LABELS_FULL[dow(day)]}</span>
+                          <span className="session-day__date">{day.getDate()}/{day.getMonth() + 1}</span>
+                        </div>
+                        {daySessions.length === 0 ? (
+                          <p className="session-day__empty">—</p>
+                        ) : (
+                          <div className="session-day__sessions">
+                            {daySessions.map((session) => (
+                              <SessionRow
+                                key={session.id}
+                                session={session}
+                                onView={() => onViewSession(session)}
+                                onEdit={() => onEditSession(session)}
+                                onDelete={() => onDeleteSession(session)}
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )
+            })()
           )}
         </div>
       )}

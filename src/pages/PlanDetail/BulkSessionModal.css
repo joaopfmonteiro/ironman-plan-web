@@ -193,6 +193,8 @@
 /* Exercise builder */
 .bsm-exercises { display: flex; flex-direction: column; gap: 0.4rem; }
 
+.bsm-ex-item { display: flex; flex-direction: column; }
+
 .bsm-ex-header {
   display: flex;
   align-items: center;
@@ -322,6 +324,20 @@
 .bsm-cal-cell--has-session:hover { background: #bae6fd; }
 .bsm-cal-cell--has-session.bsm-cal-cell--selected { background: #f97316; }
 
+.bsm-cal-cell--disabled {
+  background: transparent;
+  color: #e2e8f0;
+  cursor: not-allowed;
+}
+.bsm-cal-cell--disabled:hover { background: transparent; }
+
+.bsm-cal-empty {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  text-align: center;
+  padding: 1.5rem 0.5rem;
+}
+
 .bsm-cal-num {
   font-size: 0.8rem;
   font-weight: 600;
@@ -362,6 +378,7 @@
 
 .bsm-legend-dot--session { background: #0ea5e9; }
 .bsm-legend-dot--selected { background: #f97316; }
+.bsm-legend-dot--disabled { background: #e2e8f0; }
 
 /* Selected preview tags */
 .bsm-selected-preview {
@@ -423,6 +440,38 @@
 
 .bsm-btn--secondary { background: #f1f5f9; color: #475569; }
 .bsm-btn--secondary:hover:not(:disabled) { background: #e2e8f0; }
+
+.bsm-btn--sm {
+  flex: none;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.bsm-save-tpl-link {
+  background: none;
+  border: none;
+  font-size: 0.78rem;
+  color: #94a3b8;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-align: left;
+  padding: 0;
+  font-family: inherit;
+}
+
+.bsm-save-tpl-link:hover { color: #f97316; }
+
+.bsm-save-tpl-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.bsm-save-tpl-row .bsm-input {
+  flex: 1;
+}
 
 /* Responsive */
 @media (max-width: 600px) {

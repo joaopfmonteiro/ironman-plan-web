@@ -4,6 +4,8 @@ import { workoutTemplatesApi } from '../../api/workoutTemplates'
 import type { MicrocycleResponse, SessionExercise, SessionResponse, WorkoutTemplate } from '../../types'
 import { toLocalISODate } from '../../utils/date'
 import { ExercisePicker } from '../../components/ExercisePicker'
+import { RmHint } from '../../components/RmHint'
+import type { StrengthSuggestion } from '../../utils/strengthScheme'
 import './BulkSessionModal.css'
 
 const WORKOUT_TYPES = [
@@ -72,15 +74,19 @@ function toWeeks(days: Date[]): (Date | null)[][] {
   return weeks
 }
 
+export type BulkScope =
+  | { level: 'micro'; micro: MicrocycleResponse }
+  | { level: 'macro'; macroId: number; macroName: string; macroStartDate: string; macroEndDate: string; microcycles: MicrocycleResponse[] }
+
 interface Props {
   open: boolean
-  micro: MicrocycleResponse | null
+  scope: BulkScope | null
   existingSessions: SessionResponse[]
   onClose: () => void
-  onCreated: (microId: number, sessions: SessionResponse[]) => void
+  onCreated: (affectedMicroIds: number[]) => void
 }
 
-export function BulkSessionModal({ open, micro, existingSessions, onClose, onCreated }: Props) {
+export function BulkSessionModal({ open, scope, existingSessions, onClose, onCreated }: Props) {
   const [form, setForm] = useState({
     workoutType: 'RUN', title: '', description: '',
     plannedDurationMinutes: '', plannedDistanceKm: '', intensityZone: '', strengthType: '',
@@ -93,6 +99,9 @@ export function BulkSessionModal({ open, micro, existingSessions, onClose, onCre
   const [templates, setTemplates] = useState<WorkoutTemplate[]>([])
   const [showTpl, setShowTpl] = useState(false)
   const tplRef = useRef<HTMLDivElement>(null)
+  const [showSaveTemplate, setShowSaveTemplate] = useState(false)
+  const [templateName, setTemplateName] = useState('')
+  const [savingTemplate, setSavingTemplate] = useState(false)
 
   const existingDates = new Set(existingSessions.map(s => s.date))
 
@@ -103,6 +112,8 @@ export function BulkSessionModal({ open, micro, existingSessions, onClose, onCre
       setExercises([emptyExercise()])
       setSelectedDays(new Set())
       setShowTpl(false)
+      setShowSaveTemplate(false)
+      setTemplateName('')
     }
   }, [open])
 
@@ -121,18 +132,32 @@ export function BulkSessionModal({ open, micro, existingSessions, onClose, onCre
     return () => document.removeEventListener('mousedown', handler)
   }, [showTpl])
 
-  if (!open || !micro) return null
+  if (!open || !scope) return null
 
+  const isMacro = scope.level === 'macro'
+  const microsInScope = isMacro ? scope.microcycles : [scope.micro]
   const isEndurance = ENDURANCE_TYPES.has(form.workoutType)
   const isStrength = STRENGTH_WORKOUT_TYPES.has(form.workoutType)
-  const days = daysInRange(micro.startDate, micro.endDate)
+
+  // For a macrocycle-wide repeat, span the whole macrocycle (not just the weeks
+  // already created) so gaps with no microcycle yet show up as disabled days.
+  const rangeStart = isMacro
+    ? scope.macroStartDate
+    : microsInScope.length ? microsInScope[0].startDate : null
+  const rangeEnd = isMacro
+    ? scope.macroEndDate
+    : microsInScope.length ? microsInScope[0].endDate : null
+
+  const days = rangeStart && rangeEnd ? daysInRange(rangeStart, rangeEnd) : []
   const weeks = toWeeks(days)
+  const microForDate = (iso: string) => microsInScope.find(m => iso >= m.startDate && iso <= m.endDate)
 
   const setF = (field: string) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
       setForm(f => ({ ...f, [field]: e.target.value }))
 
   const toggleDay = (iso: string) => {
+    if (!microForDate(iso)) return
     setSelectedDays(prev => {
       const next = new Set(prev)
       next.has(iso) ? next.delete(iso) : next.add(iso)
@@ -165,14 +190,44 @@ export function BulkSessionModal({ open, micro, existingSessions, onClose, onCre
   const selectEx = (i: number, exercise: { exerciseId: number; name: string }) => {
     setExercises(prev => prev.map((ex, idx) => idx === i ? { ...ex, ...exercise } : ex))
   }
+  const applySuggestion = (i: number, suggestion: StrengthSuggestion) => {
+    setExercises(prev => prev.map((ex, idx) => idx === i ? { ...ex, ...suggestion } : ex))
+  }
+
+  const handleSaveTemplate = async () => {
+    if (!templateName.trim()) return
+    setSavingTemplate(true)
+    try {
+      const t = await workoutTemplatesApi.save({
+        name: templateName.trim(),
+        workoutType: form.workoutType as any,
+        strengthType: form.strengthType as any || undefined,
+        defaultTitle: form.title || undefined,
+        description: form.description || undefined,
+        plannedDurationMinutes: form.plannedDurationMinutes ? Number(form.plannedDurationMinutes) : undefined,
+        plannedDistanceKm: form.plannedDistanceKm ? Number(form.plannedDistanceKm) : undefined,
+        intensityZone: form.intensityZone as any || undefined,
+        exercises: isStrength
+          ? exercises
+              .filter((ex): ex is SessionExercise & { exerciseId: number } => ex.exerciseId !== undefined)
+              .map((ex, i) => ({ ...ex, orderIndex: i }))
+          : [],
+      })
+      setTemplates(prev => [...prev, t].sort((a, b) => a.name.localeCompare(b.name)))
+      setShowSaveTemplate(false)
+      setTemplateName('')
+    } finally {
+      setSavingTemplate(false)
+    }
+  }
 
   const handleClose = () => { setSaving(false); onClose() }
 
   const handleCreate = async () => {
-    if (!selectedDays.size || !form.title || !micro) return
+    if (!selectedDays.size || !form.title) return
     setSaving(true)
     try {
-      const sessions = await plansApi.bulkCreateSessions(micro.id, {
+      const payload = {
         dates: Array.from(selectedDays).sort(),
         workoutType: form.workoutType,
         title: form.title,
@@ -184,17 +239,33 @@ export function BulkSessionModal({ open, micro, existingSessions, onClose, onCre
         exercises: isStrength
           ? exercises.filter((ex): ex is SessionExercise & { exerciseId: number } => ex.exerciseId !== undefined)
           : [],
-      })
-      onClose()
-      onCreated(micro.id, sessions)
+      }
+      if (isMacro) {
+        const res = await plansApi.bulkCreateSessionsForMacro(scope.macroId, payload)
+        onClose()
+        const microIds = Array.from(new Set(res.created.map(s => s.microcycleId)))
+        onCreated(microIds)
+        if (res.skippedDates.length > 0) {
+          alert(`${res.skippedDates.length} data(s) ignorada(s) por não estarem dentro de nenhuma semana criada.`)
+        }
+      } else {
+        await plansApi.bulkCreateSessions(scope.micro.id, payload)
+        onClose()
+        onCreated([scope.micro.id])
+      }
     } finally {
       setSaving(false)
     }
   }
 
   const dayLabel = (d: Date) => d.getDate()
-  const monthLabel = (d: Date) =>
-    d.toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' })
+  const rangeLabel = () => {
+    if (!rangeStart || !rangeEnd) return ''
+    const fmt = (iso: string) => new Date(iso + 'T00:00:00').toLocaleDateString('pt-PT', { month: 'short', year: 'numeric' })
+    const startLabel = fmt(rangeStart)
+    const endLabel = fmt(rangeEnd)
+    return startLabel === endLabel ? startLabel : `${startLabel} → ${endLabel}`
+  }
 
   return (
     <div className="bsm-overlay" onClick={handleClose}>
@@ -202,7 +273,9 @@ export function BulkSessionModal({ open, micro, existingSessions, onClose, onCre
 
         {/* Header */}
         <div className="bsm-header">
-          <h2 className="bsm-title">Criar sessões em massa</h2>
+          <h2 className="bsm-title">
+            {isMacro ? `Repetir sessão — ${scope.macroName}` : 'Criar sessões em massa'}
+          </h2>
           <div className="bsm-header-right">
             <div className="bsm-tpl-wrap" ref={tplRef}>
               <button type="button" className="bsm-tpl-btn" onClick={() => setShowTpl(v => !v)}>
@@ -294,62 +367,102 @@ export function BulkSessionModal({ open, micro, existingSessions, onClose, onCre
                     <span>Exercício</span><span>S</span><span>R</span><span>kg</span><span />
                   </div>
                   {exercises.map((ex, i) => (
-                    <div key={i} className="bsm-ex-row">
-                      <ExercisePicker name={ex.name} onSelect={(exercise) => selectEx(i, exercise)} />
-                      <input className="bsm-input bsm-ex-num" type="number" placeholder="4" min="1" value={ex.sets ?? ''} onChange={e => updateEx(i, 'sets', e.target.value)} />
-                      <input className="bsm-input bsm-ex-num" type="number" placeholder="10" min="1" value={ex.reps ?? ''} onChange={e => updateEx(i, 'reps', e.target.value)} />
-                      <input className="bsm-input bsm-ex-num" type="number" placeholder="80" min="0" step="0.5" value={ex.weightKg ?? ''} onChange={e => updateEx(i, 'weightKg', e.target.value)} />
-                      <button type="button" className="bsm-ex-remove" onClick={() => setExercises(p => p.filter((_, idx) => idx !== i))} disabled={exercises.length === 1}>×</button>
+                    <div key={i} className="bsm-ex-item">
+                      <div className="bsm-ex-row">
+                        <ExercisePicker name={ex.name} onSelect={(exercise) => selectEx(i, exercise)} />
+                        <input className="bsm-input bsm-ex-num" type="number" placeholder="4" min="1" value={ex.sets ?? ''} onChange={e => updateEx(i, 'sets', e.target.value)} />
+                        <input className="bsm-input bsm-ex-num" type="number" placeholder="10" min="1" value={ex.reps ?? ''} onChange={e => updateEx(i, 'reps', e.target.value)} />
+                        <input className="bsm-input bsm-ex-num" type="number" placeholder="80" min="0" step="0.5" value={ex.weightKg ?? ''} onChange={e => updateEx(i, 'weightKg', e.target.value)} />
+                        <button type="button" className="bsm-ex-remove" onClick={() => setExercises(p => p.filter((_, idx) => idx !== i))} disabled={exercises.length === 1}>×</button>
+                      </div>
+                      <RmHint exerciseId={ex.exerciseId} strengthType={form.strengthType} onApply={(s) => applySuggestion(i, s)} />
                     </div>
                   ))}
                 </div>
               </>
+            )}
+
+            {/* Save as template */}
+            {!showSaveTemplate ? (
+              <button type="button" className="bsm-save-tpl-link" onClick={() => { setTemplateName(form.title); setShowSaveTemplate(true) }}>
+                Guardar como template
+              </button>
+            ) : (
+              <div className="bsm-save-tpl-row">
+                <input
+                  className="bsm-input"
+                  placeholder="Nome do template"
+                  value={templateName}
+                  onChange={(e) => setTemplateName(e.target.value)}
+                  autoFocus
+                />
+                <button type="button" className="bsm-btn bsm-btn--primary bsm-btn--sm" onClick={handleSaveTemplate} disabled={savingTemplate || !templateName.trim()}>
+                  {savingTemplate ? '...' : 'Guardar'}
+                </button>
+                <button type="button" className="bsm-btn bsm-btn--secondary bsm-btn--sm" onClick={() => setShowSaveTemplate(false)}>
+                  Cancelar
+                </button>
+              </div>
             )}
           </div>
 
           {/* Right: calendar */}
           <div className="bsm-calendar">
             <div className="bsm-cal-title">
-              {micro.startDate && monthLabel(new Date(micro.startDate + 'T00:00:00'))}
-              <span className="bsm-cal-range"> · Sem {micro.weekNumber}</span>
+              {rangeLabel()}
+              {!isMacro && <span className="bsm-cal-range"> · Sem {scope.micro.weekNumber}</span>}
             </div>
 
-            <div className="bsm-cal-grid">
-              {DAY_LABELS.map(l => (
-                <div key={l} className="bsm-cal-day-label">{l}</div>
-              ))}
-              {weeks.map((week, wi) =>
-                week.map((day, di) => {
-                  if (!day) return <div key={`e-${wi}-${di}`} className="bsm-cal-cell bsm-cal-cell--empty" />
-                  const iso = toISO(day)
-                  const selected = selectedDays.has(iso)
-                  const hasSession = existingDates.has(iso)
-                  return (
-                    <button
-                      key={iso}
-                      type="button"
-                      className={`bsm-cal-cell ${selected ? 'bsm-cal-cell--selected' : ''} ${hasSession ? 'bsm-cal-cell--has-session' : ''}`}
-                      onClick={() => toggleDay(iso)}
-                      title={hasSession ? 'Já tem sessão' : undefined}
-                    >
-                      <span className="bsm-cal-num">{dayLabel(day)}</span>
-                      {hasSession && <span className="bsm-cal-dot" />}
-                    </button>
-                  )
-                })
-              )}
-            </div>
+            {microsInScope.length === 0 ? (
+              <p className="bsm-cal-empty">Ainda não há semanas criadas neste macrociclo. Gera semanas primeiro.</p>
+            ) : (
+              <>
+                <div className="bsm-cal-grid">
+                  {DAY_LABELS.map(l => (
+                    <div key={l} className="bsm-cal-day-label">{l}</div>
+                  ))}
+                  {weeks.map((week, wi) =>
+                    week.map((day, di) => {
+                      if (!day) return <div key={`e-${wi}-${di}`} className="bsm-cal-cell bsm-cal-cell--empty" />
+                      const iso = toISO(day)
+                      const inScope = !!microForDate(iso)
+                      const selected = selectedDays.has(iso)
+                      const hasSession = existingDates.has(iso)
+                      return (
+                        <button
+                          key={iso}
+                          type="button"
+                          className={`bsm-cal-cell ${selected ? 'bsm-cal-cell--selected' : ''} ${hasSession ? 'bsm-cal-cell--has-session' : ''} ${!inScope ? 'bsm-cal-cell--disabled' : ''}`}
+                          onClick={() => toggleDay(iso)}
+                          disabled={!inScope}
+                          title={!inScope ? 'Cria a semana primeiro' : hasSession ? 'Já tem sessão' : undefined}
+                        >
+                          <span className="bsm-cal-num">{dayLabel(day)}</span>
+                          {hasSession && <span className="bsm-cal-dot" />}
+                        </button>
+                      )
+                    })
+                  )}
+                </div>
 
-            <div className="bsm-cal-legend">
-              <span className="bsm-legend-item">
-                <span className="bsm-legend-dot bsm-legend-dot--session" />
-                Sessão existente
-              </span>
-              <span className="bsm-legend-item">
-                <span className="bsm-legend-dot bsm-legend-dot--selected" />
-                Selecionado
-              </span>
-            </div>
+                <div className="bsm-cal-legend">
+                  <span className="bsm-legend-item">
+                    <span className="bsm-legend-dot bsm-legend-dot--session" />
+                    Sessão existente
+                  </span>
+                  <span className="bsm-legend-item">
+                    <span className="bsm-legend-dot bsm-legend-dot--selected" />
+                    Selecionado
+                  </span>
+                  {isMacro && (
+                    <span className="bsm-legend-item">
+                      <span className="bsm-legend-dot bsm-legend-dot--disabled" />
+                      Sem semana criada
+                    </span>
+                  )}
+                </div>
+              </>
+            )}
 
             {selectedDays.size > 0 && (
               <div className="bsm-selected-preview">

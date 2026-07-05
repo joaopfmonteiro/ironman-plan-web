@@ -40,6 +40,12 @@ export interface ExerciseLogResponse {
   sets: ExerciseSetLogResponse[]
 }
 
+export interface BestOneRepMaxResponse {
+  exerciseId: number
+  bestOneRepMax?: number
+  loggedAt?: string
+}
+
 export const exerciseLogsApi = {
   save: (sessionId: number, data: SaveExerciseLogRequest) =>
     client.post<ExerciseLogResponse[]>(`/sessions/${sessionId}/exercise-logs`, data).then(r => r.data),
@@ -49,4 +55,7 @@ export const exerciseLogsApi = {
 
   history: (exerciseId: number) =>
     client.get<ExerciseLogResponse[]>(`/exercise-logs/history`, { params: { exerciseId } }).then(r => r.data),
+
+  best: (exerciseId: number) =>
+    client.get<BestOneRepMaxResponse>(`/exercise-logs/exercises/${exerciseId}/best`).then(r => r.data),
 }

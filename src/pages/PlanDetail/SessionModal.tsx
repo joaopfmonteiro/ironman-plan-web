@@ -4,6 +4,8 @@ import { workoutTemplatesApi } from '../../api/workoutTemplates'
 import type { SessionExercise, SessionResponse, WorkoutTemplate } from '../../types'
 import { toLocalISODate } from '../../utils/date'
 import { ExercisePicker } from '../../components/ExercisePicker'
+import { RmHint } from '../../components/RmHint'
+import type { StrengthSuggestion } from '../../utils/strengthScheme'
 import './SessionModal.css'
 
 const WORKOUT_TYPES = [
@@ -173,6 +175,9 @@ export function SessionModal({ open, microId, editSession, onClose, onSaved }: P
   }
   const selectEx = (i: number, exercise: { exerciseId: number; name: string }) => {
     setExercises((prev) => prev.map((ex, idx) => idx === i ? { ...ex, ...exercise } : ex))
+  }
+  const applySuggestion = (i: number, suggestion: StrengthSuggestion) => {
+    setExercises((prev) => prev.map((ex, idx) => idx === i ? { ...ex, ...suggestion } : ex))
   }
   const addEx = () => setExercises((prev) => [...prev, emptyExercise()])
   const removeEx = (i: number) => setExercises((prev) => prev.filter((_, idx) => idx !== i))
@@ -353,16 +358,19 @@ export function SessionModal({ open, microId, editSession, onClose, onSaved }: P
                     <span />
                   </div>
                   {exercises.map((ex, i) => (
-                    <div key={i} className="sm-ex-row">
-                      <ExercisePicker
-                        className="sm-ex-name"
-                        name={ex.name}
-                        onSelect={(exercise) => selectEx(i, exercise)}
-                      />
-                      <input className="sm-input sm-ex-num" type="number" placeholder="4" min="1" value={ex.sets ?? ''} onChange={(e) => updateEx(i, 'sets', e.target.value)} />
-                      <input className="sm-input sm-ex-num" type="number" placeholder="10" min="1" value={ex.reps ?? ''} onChange={(e) => updateEx(i, 'reps', e.target.value)} />
-                      <input className="sm-input sm-ex-num" type="number" placeholder="80" min="0" step="0.5" value={ex.weightKg ?? ''} onChange={(e) => updateEx(i, 'weightKg', e.target.value)} />
-                      <button type="button" className="sm-ex-remove" onClick={() => removeEx(i)} disabled={exercises.length === 1} aria-label="Remover">×</button>
+                    <div key={i} className="sm-ex-item">
+                      <div className="sm-ex-row">
+                        <ExercisePicker
+                          className="sm-ex-name"
+                          name={ex.name}
+                          onSelect={(exercise) => selectEx(i, exercise)}
+                        />
+                        <input className="sm-input sm-ex-num" type="number" placeholder="4" min="1" value={ex.sets ?? ''} onChange={(e) => updateEx(i, 'sets', e.target.value)} />
+                        <input className="sm-input sm-ex-num" type="number" placeholder="10" min="1" value={ex.reps ?? ''} onChange={(e) => updateEx(i, 'reps', e.target.value)} />
+                        <input className="sm-input sm-ex-num" type="number" placeholder="80" min="0" step="0.5" value={ex.weightKg ?? ''} onChange={(e) => updateEx(i, 'weightKg', e.target.value)} />
+                        <button type="button" className="sm-ex-remove" onClick={() => removeEx(i)} disabled={exercises.length === 1} aria-label="Remover">×</button>
+                      </div>
+                      <RmHint exerciseId={ex.exerciseId} strengthType={form.strengthType} onApply={(s) => applySuggestion(i, s)} />
                     </div>
                   ))}
                 </div>

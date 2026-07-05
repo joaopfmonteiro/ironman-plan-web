@@ -1,0 +1,33 @@
+.rm-hint {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.15rem 0 0.4rem;
+  font-size: 0.72rem;
+}
+
+.rm-hint__value {
+  color: #92400e;
+  font-weight: 600;
+}
+
+.rm-hint__btn {
+  background: #fff7ed;
+  color: #f97316;
+  border: 1px solid #fed7aa;
+  border-radius: 0.4rem;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.rm-hint__btn:hover {
+  background: #ffedd5;
+}
+
+.rm-hint__note {
+  color: #cbd5e1;
+}
