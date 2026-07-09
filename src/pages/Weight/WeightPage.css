@@ -119,6 +119,34 @@
   flex-wrap: wrap;
 }
 
+/* Measurement metric tabs (evolution chart) */
+.bm-metric-tabs {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.bm-metric-tab {
+  padding: 0.3rem 0.7rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #64748b;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.bm-metric-tab:hover { color: #0f172a; }
+
+.bm-metric-tab--active {
+  background: #fff;
+  font-weight: 600;
+}
+
 /* BMI gauge */
 .bmi-gauge {
   padding: 0.25rem 0;

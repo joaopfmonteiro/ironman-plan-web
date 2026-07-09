@@ -10,12 +10,46 @@ import {
   getBodyFatCategory,
   type MeasurementGuideEntry,
 } from '../../utils/bodyMetrics'
+import { LineChart, PERIODS, getPeriodStart, type Period, type ChartPoint } from './LineChart'
 
 type MeasurementKey = MeasurementGuideEntry['key']
 type FieldValues = Record<MeasurementKey, string>
+type MetricKey = MeasurementKey | 'whr' | 'bodyFat'
 
 const EMPTY_FIELDS: FieldValues = {
   neckCm: '', chestCm: '', waistCm: '', hipCm: '', armCm: '', thighCm: '',
+}
+
+const METRIC_OPTIONS: { key: MetricKey; label: string; color: string; fillColor: string; format: (v: number) => string }[] = [
+  { key: 'waistCm', label: 'Cintura',            color: '#ef4444', fillColor: 'rgba(239,68,68,0.07)',  format: (v) => `${v.toFixed(1)} cm` },
+  { key: 'hipCm',   label: 'Anca',               color: '#8b5cf6', fillColor: 'rgba(139,92,246,0.07)', format: (v) => `${v.toFixed(1)} cm` },
+  { key: 'neckCm',  label: 'Pescoço',             color: '#f97316', fillColor: 'rgba(249,115,22,0.07)', format: (v) => `${v.toFixed(1)} cm` },
+  { key: 'chestCm', label: 'Peito',               color: '#0ea5e9', fillColor: 'rgba(14,165,233,0.07)', format: (v) => `${v.toFixed(1)} cm` },
+  { key: 'armCm',   label: 'Braço',               color: '#10b981', fillColor: 'rgba(16,185,129,0.07)', format: (v) => `${v.toFixed(1)} cm` },
+  { key: 'thighCm', label: 'Coxa',                color: '#eab308', fillColor: 'rgba(234,179,8,0.07)',  format: (v) => `${v.toFixed(1)} cm` },
+  { key: 'whr',     label: 'Rácio cintura-anca',  color: '#ec4899', fillColor: 'rgba(236,72,153,0.07)', format: (v) => v.toFixed(2) },
+  { key: 'bodyFat', label: '% Massa gorda',       color: '#6366f1', fillColor: 'rgba(99,102,241,0.07)', format: (v) => `${v.toFixed(1)}%` },
+]
+
+function getMetricPoints(metric: MetricKey, entries: BodyMeasurementResponse[], athlete: AthleteResponse | null): ChartPoint[] {
+  if (metric === 'whr') {
+    return entries
+      .filter((e) => e.waistCm != null && e.hipCm != null)
+      .map((e) => ({ id: e.id, date: e.date, value: calcWaistHipRatio(e.waistCm!, e.hipCm!) }))
+  }
+  if (metric === 'bodyFat') {
+    return entries.reduce<ChartPoint[]>((acc, e) => {
+      const bf = calcBodyFatNavy({
+        gender: athlete?.gender, heightCm: athlete?.heightCm,
+        neckCm: e.neckCm, waistCm: e.waistCm, hipCm: e.hipCm,
+      })
+      if (bf != null) acc.push({ id: e.id, date: e.date, value: bf })
+      return acc
+    }, [])
+  }
+  return entries
+    .filter((e) => e[metric] != null)
+    .map((e) => ({ id: e.id, date: e.date, value: e[metric]! }))
 }
 
 function fmtDate(dateStr: string): string {
@@ -66,6 +100,8 @@ interface MeasurementsSectionProps {
 export function MeasurementsSection({ athlete }: MeasurementsSectionProps) {
   const [allEntries, setAllEntries] = useState<BodyMeasurementResponse[]>([])
   const [loading, setLoading]       = useState(true)
+  const [period, setPeriod]         = useState<Period>('6M')
+  const [metric, setMetric]         = useState<MetricKey>('waistCm')
 
   const [addDate, setAddDate]     = useState(() => toLocalISODate())
   const [addFields, setAddFields] = useState<FieldValues>(EMPTY_FIELDS)
@@ -118,6 +154,15 @@ export function MeasurementsSection({ athlete }: MeasurementsSectionProps) {
 
   if (loading) return <div className="wp-loading">A carregar...</div>
 
+  const periodDays  = PERIODS.find((p) => p.key === period)!.days
+  const periodStart = getPeriodStart(periodDays)
+  const periodEnd   = new Date()
+  const startStr    = toLocalISODate(periodStart)
+  const periodEntries = allEntries.filter((e) => e.date >= startStr)
+
+  const activeMetric  = METRIC_OPTIONS.find((m) => m.key === metric)!
+  const chartPoints   = getMetricPoints(metric, periodEntries, athlete)
+
   const latest = allEntries[allEntries.length - 1] ?? null
 
   const whr = latest?.waistCm && latest?.hipCm ? calcWaistHipRatio(latest.waistCm, latest.hipCm) : null
@@ -147,6 +192,43 @@ export function MeasurementsSection({ athlete }: MeasurementsSectionProps) {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Chart */}
+      <div className="wp-chart-card">
+        <div className="wp-chart-header">
+          <span className="wp-chart-label">Evolução</span>
+          <div className="weight-period-tabs">
+            {PERIODS.map((p) => (
+              <button key={p.key}
+                className={`weight-period-tab ${period === p.key ? 'weight-period-tab--active' : ''}`}
+                onClick={() => setPeriod(p.key)}>
+                {p.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="bm-metric-tabs">
+          {METRIC_OPTIONS.map((m) => (
+            <button key={m.key}
+              className={`bm-metric-tab ${metric === m.key ? 'bm-metric-tab--active' : ''}`}
+              style={metric === m.key ? { borderColor: m.color, color: m.color } : undefined}
+              onClick={() => setMetric(m.key)}>
+              {m.label}
+            </button>
+          ))}
+        </div>
+        <LineChart
+          points={chartPoints}
+          period={period}
+          periodStart={periodStart}
+          periodEnd={periodEnd}
+          color={activeMetric.color}
+          fillColor={activeMetric.fillColor}
+          yTickFormat={activeMetric.format}
+          tooltip={(p) => `${activeMetric.format(p.value)} — ${p.date}`}
+          emptyLabel={`Sem registos de "${activeMetric.label}" neste período`}
+        />
       </div>
 
       {/* Results */}
