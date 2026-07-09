@@ -74,6 +74,186 @@
 .bmi--obese2,
 .bmi--obese3 { background: #fee2e2; color: #991b1b; }
 
+.risk--low      { background: #dcfce7; color: #166534; }
+.risk--moderate { background: #fef9c3; color: #854d0e; }
+.risk--high     { background: #fee2e2; color: #991b1b; }
+
+.bf--essential { background: #dbeafe; color: #1d4ed8; }
+.bf--athlete   { background: #dcfce7; color: #166534; }
+.bf--fitness   { background: #d1fae5; color: #065f46; }
+.bf--average   { background: #fef9c3; color: #854d0e; }
+.bf--obese     { background: #fee2e2; color: #991b1b; }
+
+/* Page tabs */
+.wp-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.wp-tab {
+  padding: 0.6rem 0.25rem;
+  margin-bottom: -1px;
+  margin-right: 1.25rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #94a3b8;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.wp-tab:hover { color: #475569; }
+
+.wp-tab--active {
+  color: #f97316;
+  border-bottom-color: #f97316;
+}
+
+.wp-chart-controls {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* BMI gauge */
+.bmi-gauge {
+  padding: 0.25rem 0;
+}
+
+.bmi-gauge__bar {
+  display: flex;
+  height: 1rem;
+  border-radius: 9999px;
+  overflow: hidden;
+  position: relative;
+}
+
+.bmi-gauge__seg.gauge--low     { background: #60a5fa; }
+.bmi-gauge__seg.gauge--normal  { background: #4ade80; }
+.bmi-gauge__seg.gauge--over    { background: #facc15; }
+.bmi-gauge__seg.gauge--obese1  { background: #fb923c; }
+.bmi-gauge__seg.gauge--obese2  { background: #f87171; }
+.bmi-gauge__seg.gauge--obese3  { background: #dc2626; }
+
+.bmi-gauge__marker {
+  position: absolute;
+  top: -0.4rem;
+  bottom: -0.4rem;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.bmi-gauge__marker-tri {
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid #0f172a;
+}
+
+.bmi-gauge__marker-line {
+  width: 2px;
+  flex: 1;
+  background: #0f172a;
+}
+
+.bmi-gauge__scale {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  color: #94a3b8;
+  margin-top: 0.4rem;
+}
+
+.bmi-gauge__result {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.85rem;
+}
+
+.bmi-gauge__value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* Measurement guide */
+.bm-guide {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.bm-guide__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.9rem;
+  margin-top: 0.5rem;
+}
+
+.bm-guide__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.bm-guide__label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #f97316;
+}
+
+.bm-guide__desc {
+  font-size: 0.8rem;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+/* Results */
+.bm-results {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.bm-result-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  padding: 1rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  flex: 1;
+  min-width: 220px;
+}
+
+/* Measurement form grid */
+.bm-field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.bm-table-scroll {
+  overflow-x: auto;
+}
+
+.bm-modal {
+  width: 420px;
+  max-width: 90vw;
+}
+
 /* Chart card */
 .wp-chart-card {
   background: #fff;

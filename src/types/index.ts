@@ -10,6 +10,28 @@ export interface CreateWeightEntryRequest {
   weightKg: number
 }
 
+// --- Body measurements ---
+export interface BodyMeasurementResponse {
+  id: number
+  date: string
+  neckCm?: number
+  chestCm?: number
+  waistCm?: number
+  hipCm?: number
+  armCm?: number
+  thighCm?: number
+}
+
+export interface CreateBodyMeasurementRequest {
+  date: string
+  neckCm?: number
+  chestCm?: number
+  waistCm?: number
+  hipCm?: number
+  armCm?: number
+  thighCm?: number
+}
+
 // --- Auth ---
 export interface AuthResponse {
   token: string
