@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { bodyMeasurementsApi } from '../../api/bodyMeasurements'
-import type { AthleteResponse, BodyMeasurementResponse, CreateBodyMeasurementRequest } from '../../types'
+import { weightApi } from '../../api/weight'
+import type { AthleteResponse, BodyMeasurementResponse, CreateBodyMeasurementRequest, WeightEntryResponse } from '../../types'
 import { toLocalISODate } from '../../utils/date'
 import {
   MEASUREMENT_GUIDE,
@@ -8,44 +9,57 @@ import {
   getWhrCategory,
   calcBodyFatNavy,
   getBodyFatCategory,
+  buildBodyCompositionBlocks,
   type MeasurementGuideEntry,
+  type BodyCompositionBlock,
 } from '../../utils/bodyMetrics'
 import { LineChart, PERIODS, getPeriodStart, type Period, type ChartPoint } from './LineChart'
 
 type MeasurementKey = MeasurementGuideEntry['key']
 type FieldValues = Record<MeasurementKey, string>
-type MetricKey = MeasurementKey | 'whr' | 'bodyFat'
+type MetricKey = MeasurementKey | 'whr' | 'bodyFat' | 'fatMassKg' | 'leanMassKg'
 
 const EMPTY_FIELDS: FieldValues = {
   neckCm: '', chestCm: '', waistCm: '', hipCm: '', armCm: '', thighCm: '',
 }
 
 const METRIC_OPTIONS: { key: MetricKey; label: string; color: string; fillColor: string; format: (v: number) => string }[] = [
-  { key: 'waistCm', label: 'Cintura',            color: '#ef4444', fillColor: 'rgba(239,68,68,0.07)',  format: (v) => `${v.toFixed(1)} cm` },
-  { key: 'hipCm',   label: 'Anca',               color: '#8b5cf6', fillColor: 'rgba(139,92,246,0.07)', format: (v) => `${v.toFixed(1)} cm` },
-  { key: 'neckCm',  label: 'Pescoço',             color: '#f97316', fillColor: 'rgba(249,115,22,0.07)', format: (v) => `${v.toFixed(1)} cm` },
-  { key: 'chestCm', label: 'Peito',               color: '#0ea5e9', fillColor: 'rgba(14,165,233,0.07)', format: (v) => `${v.toFixed(1)} cm` },
-  { key: 'armCm',   label: 'Braço',               color: '#10b981', fillColor: 'rgba(16,185,129,0.07)', format: (v) => `${v.toFixed(1)} cm` },
-  { key: 'thighCm', label: 'Coxa',                color: '#eab308', fillColor: 'rgba(234,179,8,0.07)',  format: (v) => `${v.toFixed(1)} cm` },
-  { key: 'whr',     label: 'Rácio cintura-anca',  color: '#ec4899', fillColor: 'rgba(236,72,153,0.07)', format: (v) => v.toFixed(2) },
-  { key: 'bodyFat', label: '% Massa gorda',       color: '#6366f1', fillColor: 'rgba(99,102,241,0.07)', format: (v) => `${v.toFixed(1)}%` },
+  { key: 'waistCm',    label: 'Cintura',              color: '#ef4444', fillColor: 'rgba(239,68,68,0.07)',  format: (v) => `${v.toFixed(1)} cm` },
+  { key: 'hipCm',      label: 'Anca',                 color: '#8b5cf6', fillColor: 'rgba(139,92,246,0.07)', format: (v) => `${v.toFixed(1)} cm` },
+  { key: 'neckCm',     label: 'Pescoço',               color: '#f97316', fillColor: 'rgba(249,115,22,0.07)', format: (v) => `${v.toFixed(1)} cm` },
+  { key: 'chestCm',    label: 'Peito',                 color: '#0ea5e9', fillColor: 'rgba(14,165,233,0.07)', format: (v) => `${v.toFixed(1)} cm` },
+  { key: 'armCm',      label: 'Braço',                 color: '#10b981', fillColor: 'rgba(16,185,129,0.07)', format: (v) => `${v.toFixed(1)} cm` },
+  { key: 'thighCm',    label: 'Coxa',                  color: '#eab308', fillColor: 'rgba(234,179,8,0.07)',  format: (v) => `${v.toFixed(1)} cm` },
+  { key: 'whr',        label: 'Rácio cintura-anca',    color: '#ec4899', fillColor: 'rgba(236,72,153,0.07)', format: (v) => v.toFixed(2) },
+  { key: 'bodyFat',    label: '% Massa gorda',         color: '#6366f1', fillColor: 'rgba(99,102,241,0.07)', format: (v) => `${v.toFixed(1)}%` },
+  { key: 'fatMassKg',  label: 'Massa gorda (kg)',      color: '#4f46e5', fillColor: 'rgba(79,70,229,0.07)',  format: (v) => `${v.toFixed(1)} kg` },
+  { key: 'leanMassKg', label: 'Massa magra (kg)',      color: '#0d9488', fillColor: 'rgba(13,148,136,0.07)', format: (v) => `${v.toFixed(1)} kg` },
 ]
 
-function getMetricPoints(metric: MetricKey, entries: BodyMeasurementResponse[], athlete: AthleteResponse | null): ChartPoint[] {
+function getMetricPoints(
+  metric: MetricKey,
+  entries: BodyMeasurementResponse[],
+  blocks: BodyCompositionBlock[]
+): ChartPoint[] {
   if (metric === 'whr') {
     return entries
       .filter((e) => e.waistCm != null && e.hipCm != null)
       .map((e) => ({ id: e.id, date: e.date, value: calcWaistHipRatio(e.waistCm!, e.hipCm!) }))
   }
   if (metric === 'bodyFat') {
-    return entries.reduce<ChartPoint[]>((acc, e) => {
-      const bf = calcBodyFatNavy({
-        gender: athlete?.gender, heightCm: athlete?.heightCm,
-        neckCm: e.neckCm, waistCm: e.waistCm, hipCm: e.hipCm,
-      })
-      if (bf != null) acc.push({ id: e.id, date: e.date, value: bf })
-      return acc
-    }, [])
+    return blocks
+      .filter((b) => b.bodyFatPercent != null)
+      .map((b) => ({ id: b.id, date: b.date, value: b.bodyFatPercent! }))
+  }
+  if (metric === 'fatMassKg') {
+    return blocks
+      .filter((b) => b.fatMassKg != null)
+      .map((b) => ({ id: b.id, date: b.date, value: b.fatMassKg! }))
+  }
+  if (metric === 'leanMassKg') {
+    return blocks
+      .filter((b) => b.leanMassKg != null)
+      .map((b) => ({ id: b.id, date: b.date, value: b.leanMassKg! }))
   }
   return entries
     .filter((e) => e[metric] != null)
@@ -98,10 +112,11 @@ interface MeasurementsSectionProps {
 }
 
 export function MeasurementsSection({ athlete }: MeasurementsSectionProps) {
-  const [allEntries, setAllEntries] = useState<BodyMeasurementResponse[]>([])
-  const [loading, setLoading]       = useState(true)
-  const [period, setPeriod]         = useState<Period>('6M')
-  const [metric, setMetric]         = useState<MetricKey>('waistCm')
+  const [allEntries, setAllEntries]     = useState<BodyMeasurementResponse[]>([])
+  const [weightEntries, setWeightEntries] = useState<WeightEntryResponse[]>([])
+  const [loading, setLoading]           = useState(true)
+  const [period, setPeriod]             = useState<Period>('6M')
+  const [metric, setMetric]             = useState<MetricKey>('waistCm')
 
   const [addDate, setAddDate]     = useState(() => toLocalISODate())
   const [addFields, setAddFields] = useState<FieldValues>(EMPTY_FIELDS)
@@ -113,7 +128,12 @@ export function MeasurementsSection({ athlete }: MeasurementsSectionProps) {
   const [editSaving, setEditSaving]   = useState(false)
 
   useEffect(() => {
-    bodyMeasurementsApi.list().then(setAllEntries).finally(() => setLoading(false))
+    Promise.all([bodyMeasurementsApi.list(), weightApi.list()])
+      .then(([measurements, weights]) => {
+        setAllEntries(measurements)
+        setWeightEntries(weights)
+      })
+      .finally(() => setLoading(false))
   }, [])
 
   const handleAdd = async (e: React.FormEvent) => {
@@ -160,24 +180,29 @@ export function MeasurementsSection({ athlete }: MeasurementsSectionProps) {
   const startStr    = toLocalISODate(periodStart)
   const periodEntries = allEntries.filter((e) => e.date >= startStr)
 
-  const activeMetric  = METRIC_OPTIONS.find((m) => m.key === metric)!
-  const chartPoints   = getMetricPoints(metric, periodEntries, athlete)
+  // Each weigh-in is paired with the latest perimeters recorded up to that
+  // date, so % massa gorda / massa gorda (kg) update every time you weigh
+  // in, not only when you re-measure perimeters.
+  const blocks       = buildBodyCompositionBlocks(weightEntries, allEntries, athlete)
+  const periodBlocks = blocks.filter((b) => b.date >= startStr)
 
-  const latest = allEntries[allEntries.length - 1] ?? null
+  const activeMetric = METRIC_OPTIONS.find((m) => m.key === metric)!
+  const chartPoints  = getMetricPoints(metric, periodEntries, periodBlocks)
+
+  const latest      = allEntries[allEntries.length - 1] ?? null
+  const latestBlock = blocks[blocks.length - 1] ?? null
 
   const whr = latest?.waistCm && latest?.hipCm ? calcWaistHipRatio(latest.waistCm, latest.hipCm) : null
   const whrCat = whr != null ? getWhrCategory(whr, athlete?.gender) : null
 
-  const bodyFat = latest
-    ? calcBodyFatNavy({
-        gender: athlete?.gender,
-        heightCm: athlete?.heightCm,
-        neckCm: latest.neckCm,
-        waistCm: latest.waistCm,
-        hipCm: latest.hipCm,
-      })
-    : null
+  const bodyFat = latestBlock?.bodyFatPercent ?? null
   const bodyFatCat = bodyFat != null ? getBodyFatCategory(bodyFat, athlete?.gender) : null
+  const fatMassKg = latestBlock?.fatMassKg ?? null
+  const leanMassKg = latestBlock?.leanMassKg ?? null
+
+  const massHint = weightEntries.length === 0
+    ? 'Regista o teu peso na aba "Peso & IMC" para calcular'
+    : `Regista pescoço, cintura${athlete?.gender === 'FEMALE' ? ' e anca' : ''} e confirma altura/género no perfil`
 
   return (
     <>
@@ -252,9 +277,23 @@ export function MeasurementsSection({ athlete }: MeasurementsSectionProps) {
               {bodyFatCat && <span className={`wp-stat__badge ${bodyFatCat.cls}`}>{bodyFatCat.label}</span>}
             </>
           ) : (
-            <span className="wp-stat__sub">
-              Regista pescoço, cintura{athlete?.gender === 'FEMALE' ? ' e anca' : ''} e confirma altura/género no perfil
-            </span>
+            <span className="wp-stat__sub">{massHint}</span>
+          )}
+        </div>
+        <div className="bm-result-card">
+          <span className="wp-stat__label">Massa gorda</span>
+          {fatMassKg != null ? (
+            <span className="wp-stat__value">{fatMassKg.toFixed(1)} kg</span>
+          ) : (
+            <span className="wp-stat__sub">{massHint}</span>
+          )}
+        </div>
+        <div className="bm-result-card">
+          <span className="wp-stat__label">Massa magra</span>
+          {leanMassKg != null ? (
+            <span className="wp-stat__value">{leanMassKg.toFixed(1)} kg</span>
+          ) : (
+            <span className="wp-stat__sub">{massHint}</span>
           )}
         </div>
       </div>

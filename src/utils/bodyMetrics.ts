@@ -1,4 +1,4 @@
-import type { Gender } from '../types'
+import type { Gender, WeightEntryResponse, BodyMeasurementResponse, AthleteResponse } from '../types'
 
 // --- BMI ---
 export const BMI_CATS = [
@@ -81,6 +81,55 @@ const BODY_FAT_CATS: Record<'MALE' | 'FEMALE', { max: number; label: string; cls
 export function getBodyFatCategory(percent: number, gender?: Gender) {
   const cats = BODY_FAT_CATS[gender === 'FEMALE' ? 'FEMALE' : 'MALE']
   return cats.find((c) => percent < c.max) ?? cats[cats.length - 1]
+}
+
+// --- Body composition blocks: pair each weigh-in with the latest known
+// perimeters as of that date, so fat/lean mass (kg) stay in sync with
+// weight even though perimeters are measured less often. ---
+export interface BodyCompositionBlock {
+  id: number
+  date: string
+  weightKg: number
+  measurementDate: string | null
+  bodyFatPercent: number | null
+  fatMassKg: number | null
+  leanMassKg: number | null
+}
+
+export function buildBodyCompositionBlocks(
+  weightEntries: WeightEntryResponse[],
+  measurementEntries: BodyMeasurementResponse[],
+  athlete?: Pick<AthleteResponse, 'gender' | 'heightCm'> | null
+): BodyCompositionBlock[] {
+  const sortedMeasurements = [...measurementEntries].sort((a, b) => a.date.localeCompare(b.date))
+  const sortedWeights = [...weightEntries].sort((a, b) => a.date.localeCompare(b.date))
+
+  return sortedWeights.map((w) => {
+    const latestMeasurement = sortedMeasurements.filter((m) => m.date <= w.date).pop() ?? null
+
+    const bodyFatPercent = latestMeasurement
+      ? calcBodyFatNavy({
+          gender: athlete?.gender,
+          heightCm: athlete?.heightCm,
+          neckCm: latestMeasurement.neckCm,
+          waistCm: latestMeasurement.waistCm,
+          hipCm: latestMeasurement.hipCm,
+        })
+      : null
+
+    const fatMassKg = bodyFatPercent != null ? (w.weightKg * bodyFatPercent) / 100 : null
+    const leanMassKg = fatMassKg != null ? w.weightKg - fatMassKg : null
+
+    return {
+      id: w.id,
+      date: w.date,
+      weightKg: w.weightKg,
+      measurementDate: latestMeasurement?.date ?? null,
+      bodyFatPercent,
+      fatMassKg,
+      leanMassKg,
+    }
+  })
 }
 
 // --- Measurement guide ---
