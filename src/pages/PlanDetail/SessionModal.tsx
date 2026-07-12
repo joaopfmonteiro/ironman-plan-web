@@ -41,6 +41,11 @@ const STRENGTH_WORKOUT_TYPES = new Set(['STRENGTH', 'HYROX', 'CROSSFIT'])
 const today = () => toLocalISODate()
 const emptyExercise = (): SessionExercise => ({ exerciseId: undefined, name: '', sets: undefined, reps: undefined, weightKg: undefined })
 
+// Rows without a catalog exerciseId are silently dropped on save (backend requires a real exercise).
+// If the row has data but no catalog match, warn instead of losing it silently.
+const findUnmatchedExerciseIdx = (exercises: SessionExercise[]) =>
+  exercises.findIndex(ex => ex.exerciseId === undefined && (ex.sets !== undefined || ex.reps !== undefined || ex.weightKg !== undefined))
+
 interface Props {
   open: boolean
   microId: number | null
@@ -142,6 +147,13 @@ export function SessionModal({ open, microId, editSession, onClose, onSaved }: P
 
   const handleSaveTemplate = async () => {
     if (!templateName.trim()) return
+    if (isStrength) {
+      const idx = findUnmatchedExerciseIdx(exercises)
+      if (idx !== -1) {
+        alert(`Seleciona um exercício da lista para a linha ${idx + 1} — caso contrário não é guardado no template.`)
+        return
+      }
+    }
     setSavingTemplate(true)
     try {
       const t = await workoutTemplatesApi.save({
@@ -186,6 +198,13 @@ export function SessionModal({ open, microId, editSession, onClose, onSaved }: P
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (isStrength) {
+      const idx = findUnmatchedExerciseIdx(exercises)
+      if (idx !== -1) {
+        alert(`Seleciona um exercício da lista para a linha ${idx + 1} — caso contrário não fica guardado na sessão.`)
+        return
+      }
+    }
     setSaving(true)
     const effectiveMicroId = editSession?.microcycleId ?? microId
     try {

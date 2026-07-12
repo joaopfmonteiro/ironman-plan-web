@@ -148,7 +148,7 @@
 }
 
 .rsm-set-row--failed {
-  background: #fffbfb;
+  background: #fafafa;
 }
 .rsm-set-row--failed .rsm-planned-val {
   opacity: 0.5;
@@ -184,7 +184,7 @@
   color: #0f172a;
 }
 .rsm-set-row input:focus { border-color: #f97316; }
-.rsm-set-row--failed input { border-color: #fecaca; background: #fff5f5; }
+.rsm-set-row--failed input { border-color: #e2e8f0; background: #fafafa; color: #94a3b8; }
 
 .rsm-set-btns {
   display: flex;
@@ -207,7 +207,7 @@
   flex-shrink: 0;
 }
 .rsm-done-btn--ok   { background: #dcfce7; color: #15803d; }
-.rsm-done-btn--fail { background: #fee2e2; color: #dc2626; }
+.rsm-done-btn--fail { background: #e2e8f0; color: #94a3b8; }
 
 .rsm-remove-set-btn {
   background: none;

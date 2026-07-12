@@ -33,7 +33,7 @@ const emptySet = (n: number, plannedReps?: number, plannedWeightKg?: number): Lo
   _key: key(), setNumber: n,
   plannedReps, plannedWeightKg,
   actualReps: plannedReps, actualWeightKg: plannedWeightKg,
-  completed: true,
+  completed: false,
 })
 
 interface Props {
@@ -158,6 +158,45 @@ export function RegisterSessionModal({ session, onClose, onSaved }: Props) {
   // ---- Save ----
 
   const handleSave = async () => {
+    if (isStrength) {
+      // Rows without a resolved catalog exerciseId can't be saved as exercise logs — the backend
+      // rejects them and, historically, they were silently dropped instead. Block instead of losing data.
+      const unmatchedIdx = exercises.findIndex(e =>
+        e.exerciseId === undefined &&
+        (e.notes.trim() !== '' || e.rpe !== undefined ||
+          e.sets.some(s => s.actualReps !== undefined || s.actualWeightKg !== undefined))
+      )
+      if (unmatchedIdx !== -1) {
+        alert(`Seleciona um exercício da lista (catálogo) para a linha ${unmatchedIdx + 1} — caso contrário essa carga não é guardada e não entra no histórico/1RM.`)
+        return
+      }
+
+      // The backend only computes 1RM from sets marked completed — a set with data but marked
+      // "falhada" (the ✗ toggle) contributes nothing, same as a set with no reps/weight at all.
+      // Both cases silently produce a log entry with blank history/RM, so warn before saving.
+      const noUsableDataIdx = exercises.findIndex(e => {
+        if (e.exerciseId === undefined) return false
+        const hasAnyData = e.sets.some(s => s.actualReps !== undefined || s.actualWeightKg !== undefined)
+        const hasCompletedData = e.sets.some(s => s.completed && (s.actualReps !== undefined || s.actualWeightKg !== undefined))
+        return hasAnyData && !hasCompletedData
+      })
+      if (noUsableDataIdx !== -1) {
+        const proceed = confirm(`A linha ${noUsableDataIdx + 1} (${exercises[noUsableDataIdx].exerciseName}) tem todas as séries marcadas como falhadas (✗) — não vai aparecer no histórico nem no 1RM. Guardar mesmo assim?`)
+        if (!proceed) return
+      }
+
+      // A set with no reps and no weight logged contributes nothing to the RM/history —
+      // most often this means the user only toggled "completed" without filling in the load.
+      const emptyIdx = exercises.findIndex(e =>
+        e.exerciseId !== undefined &&
+        e.sets.every(s => s.actualReps === undefined && s.actualWeightKg === undefined)
+      )
+      if (emptyIdx !== -1 && noUsableDataIdx === -1) {
+        const proceed = confirm(`A linha ${emptyIdx + 1} (${exercises[emptyIdx].exerciseName}) não tem reps nem peso preenchidos — não vai aparecer no histórico nem no 1RM. Guardar mesmo assim?`)
+        if (!proceed) return
+      }
+    }
+
     setSaving(true)
     try {
       // Always mark session as complete when saving
@@ -197,6 +236,9 @@ export function RegisterSessionModal({ session, onClose, onSaved }: Props) {
 
       onSaved(session.id)
       onClose()
+    } catch (err) {
+      console.error(err)
+      alert('Erro ao guardar o treino. As cargas dos exercícios podem não ter sido guardadas — tenta novamente.')
     } finally {
       setSaving(false)
     }
@@ -284,9 +326,9 @@ export function RegisterSessionModal({ session, onClose, onSaved }: Props) {
                           <button
                             className={`rsm-done-btn ${s.completed ? 'rsm-done-btn--ok' : 'rsm-done-btn--fail'}`}
                             onClick={() => updateSet(exIdx, s._key, 'completed', !s.completed)}
-                            title={s.completed ? 'Marcar como falhada' : 'Marcar como completa'}
+                            title={s.completed ? 'Marcar como não feita' : 'Marcar como feita'}
                           >
-                            {s.completed ? '✓' : '✗'}
+                            {s.completed ? '✓' : '○'}
                           </button>
                           {ex.sets.length > 1 && (
                             <button className="rsm-remove-set-btn" onClick={() => removeSet(exIdx, s._key)}>

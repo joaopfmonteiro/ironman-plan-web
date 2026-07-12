@@ -61,7 +61,7 @@ export function ProgressPage() {
   // Stats
   const allRMs = history.map(h => h.estimatedOneRepMax).filter(Boolean) as number[]
   const currentRM = allRMs[allRMs.length - 1]
-  const bestRM = Math.max(...allRMs)
+  const bestRM = allRMs.length > 0 ? Math.max(...allRMs) : undefined
   const firstRM = allRMs[0]
   const rmGain = currentRM && firstRM ? +(currentRM - firstRM).toFixed(1) : null
 
