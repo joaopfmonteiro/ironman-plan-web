@@ -72,7 +72,9 @@ export interface AthleteResponse {
 
 // --- Enums ---
 export type WorkoutType = 'SWIM' | 'BIKE' | 'RUN' | 'STRENGTH' | 'HYROX' | 'CROSSFIT' | 'BRICK' | 'REST'
-export type StrengthType = 'GENERAL' | 'HYPERTROPHY' | 'POWER' | 'FUNCTIONAL' | 'CIRCUIT'
+export type StrengthType =
+  | 'GENERAL' | 'HYPERTROPHY' | 'POWER' | 'FUNCTIONAL' | 'CIRCUIT'
+  | 'PLYOMETRIC' | 'EXPLOSIVE' | 'VO2MAX' | 'Z2' | 'THRESHOLD' | 'RECOVERY' | 'TECHNIQUE' | 'SPRINT'
 export type IntensityZone = 'Z1' | 'Z2' | 'Z3' | 'Z4' | 'Z5'
 export type MacrocycleType = 'BASE' | 'BUILD' | 'PEAK' | 'RACE' | 'RECOVERY'
 export type MicrocycleFocus = 'VOLUME' | 'INTENSITY' | 'RECOVERY' | 'TEST'
@@ -145,6 +147,10 @@ export interface SessionResponse {
   workoutType: WorkoutType
   title: string
   description?: string
+  warmUp?: string
+  mainSet?: string
+  coolDown?: string
+  notes?: string
   plannedDurationMinutes?: number
   plannedDistanceKm?: number
   intensityZone?: IntensityZone

@@ -10,6 +10,8 @@ import { ProfilePage } from './pages/Profile'
 import { DashboardPage } from './pages/Dashboard'
 import { PlansPage } from './pages/Plans'
 import { PlanDetailPage } from './pages/PlanDetail'
+import { SessionFormPage } from './pages/SessionForm'
+import { SessionRegisterPage } from './pages/SessionRegister'
 import { CalendarPage } from './pages/Calendar'
 import { RacesPage } from './pages/Races'
 import { TemplatesPage } from './pages/Templates'
@@ -41,6 +43,9 @@ export default function App() {
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/plans" element={<PlansPage />} />
           <Route path="/plans/:id" element={<PlanDetailPage />} />
+          <Route path="/plans/:id/sessions/new" element={<SessionFormPage />} />
+          <Route path="/plans/:id/sessions/:sessionId/edit" element={<SessionFormPage />} />
+          <Route path="/plans/:id/sessions/:sessionId/register" element={<SessionRegisterPage />} />
           <Route path="/calendar" element={<CalendarPage />} />
           <Route path="/races" element={<RacesPage />} />
           <Route path="/templates" element={<TemplatesPage />} />

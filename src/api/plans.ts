@@ -46,6 +46,10 @@ export interface CreateSessionRequest {
   workoutType: string
   title: string
   description?: string
+  warmUp?: string
+  mainSet?: string
+  coolDown?: string
+  notes?: string
   plannedDurationMinutes?: number
   plannedDistanceKm?: number
   intensityZone?: string
@@ -58,6 +62,10 @@ export interface BulkCreateSessionRequest {
   workoutType: string
   title: string
   description?: string
+  warmUp?: string
+  mainSet?: string
+  coolDown?: string
+  notes?: string
   plannedDurationMinutes?: number
   plannedDistanceKm?: number
   intensityZone?: string
@@ -114,6 +122,10 @@ export interface UpdateSessionRequest {
   workoutType?: string
   title?: string
   description?: string
+  warmUp?: string
+  mainSet?: string
+  coolDown?: string
+  notes?: string
   plannedDurationMinutes?: number
   plannedDistanceKm?: number
   intensityZone?: string

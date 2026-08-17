@@ -13,8 +13,11 @@ const workoutIcon: Record<string, string> = {
 }
 
 const strengthTypeLabel: Record<string, string> = {
-  GENERAL: 'Geral', HYPERTROPHY: 'Hipertrofia', POWER: 'Potência',
-  FUNCTIONAL: 'Funcional', CIRCUIT: 'Circuito',
+  GENERAL: 'Geral', HYPERTROPHY: 'Hipertrofia', POWER: 'Força máxima',
+  FUNCTIONAL: 'Funcional', CIRCUIT: 'Circuito', PLYOMETRIC: 'Pliometria',
+  EXPLOSIVE: 'Explosão', VO2MAX: 'VO2 Max', Z2: 'Z2 — Base aeróbica',
+  THRESHOLD: 'Limiar', RECOVERY: 'Recuperação ativa', TECHNIQUE: 'Técnica',
+  SPRINT: 'Sprint',
 }
 
 function formatDate(d?: string) {
@@ -81,8 +84,35 @@ export function SessionViewModal({ session, onClose, onEdit, onRegister }: Props
             </div>
           )}
 
-          {/* Description */}
-          {session.description && (
+          {/* Swim structured plan */}
+          {session.workoutType === 'SWIM' && (session.warmUp || session.mainSet || session.coolDown || session.notes) ? (
+            <>
+              {session.warmUp && (
+                <div className="svm-section">
+                  <p className="svm-section__label">Aquecimento</p>
+                  <p className="svm-description">{session.warmUp}</p>
+                </div>
+              )}
+              {session.mainSet && (
+                <div className="svm-section">
+                  <p className="svm-section__label">Parte fundamental</p>
+                  <p className="svm-description">{session.mainSet}</p>
+                </div>
+              )}
+              {session.coolDown && (
+                <div className="svm-section">
+                  <p className="svm-section__label">Retorno à calma</p>
+                  <p className="svm-description">{session.coolDown}</p>
+                </div>
+              )}
+              {session.notes && (
+                <div className="svm-section">
+                  <p className="svm-section__label">Notas</p>
+                  <p className="svm-description">{session.notes}</p>
+                </div>
+              )}
+            </>
+          ) : session.description && (
             <div className="svm-section">
               <p className="svm-section__label">Descrição</p>
               <p className="svm-description">{session.description}</p>

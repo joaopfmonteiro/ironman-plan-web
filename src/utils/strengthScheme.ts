@@ -13,6 +13,8 @@ export const STRENGTH_SCHEME: Record<string, StrengthScheme> = {
   POWER:       { repsMin: 3,  repsMax: 5,  pctRM: 85, sets: 5 },
   FUNCTIONAL:  { repsMin: 10, repsMax: 15, pctRM: 55, sets: 3 },
   CIRCUIT:     { repsMin: 15, repsMax: 20, pctRM: 45, sets: 3 },
+  PLYOMETRIC:  { repsMin: 5,  repsMax: 8,  pctRM: 30, sets: 4 },
+  EXPLOSIVE:   { repsMin: 3,  repsMax: 6,  pctRM: 75, sets: 5 },
 }
 
 export interface StrengthSuggestion {

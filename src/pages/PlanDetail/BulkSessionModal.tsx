@@ -18,12 +18,20 @@ const WORKOUT_TYPES = [
   { value: 'CROSSFIT', label: '⚡ CrossFit' },
 ]
 
-const STRENGTH_TYPES = [
+const FOCUS_TYPES = [
   { value: 'GENERAL',     label: 'Geral' },
   { value: 'HYPERTROPHY', label: 'Hipertrofia' },
   { value: 'POWER',       label: 'Força máxima' },
   { value: 'FUNCTIONAL',  label: 'Funcional' },
   { value: 'CIRCUIT',     label: 'Circuito' },
+  { value: 'PLYOMETRIC',  label: 'Pliometria' },
+  { value: 'EXPLOSIVE',   label: 'Explosão' },
+  { value: 'VO2MAX',      label: 'VO2 Max' },
+  { value: 'Z2',          label: 'Z2 — Base aeróbica' },
+  { value: 'THRESHOLD',   label: 'Limiar' },
+  { value: 'RECOVERY',    label: 'Recuperação ativa' },
+  { value: 'TECHNIQUE',   label: 'Técnica' },
+  { value: 'SPRINT',      label: 'Sprint' },
 ]
 
 const INTENSITY_ZONES = [
@@ -335,15 +343,13 @@ export function BulkSessionModal({ open, scope, existingSessions, onClose, onCre
                   {WORKOUT_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                 </select>
               </div>
-              {isStrength && (
-                <div className="bsm-field">
-                  <label className="bsm-label">Subtipo</label>
-                  <select className="bsm-input bsm-select" value={form.strengthType} onChange={setF('strengthType')}>
-                    <option value="">—</option>
-                    {STRENGTH_TYPES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-                  </select>
-                </div>
-              )}
+              <div className="bsm-field">
+                <label className="bsm-label">Subtipo</label>
+                <select className="bsm-input bsm-select" value={form.strengthType} onChange={setF('strengthType')}>
+                  <option value="">—</option>
+                  {FOCUS_TYPES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+                </select>
+              </div>
             </div>
 
             <div className="bsm-field">

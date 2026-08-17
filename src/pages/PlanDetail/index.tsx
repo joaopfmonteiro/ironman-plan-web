@@ -12,10 +12,8 @@ import { Badge } from '../../components/ui/Badge'
 import { MacrocycleModal } from './MacrocycleModal'
 import { MicrocycleModal } from './MicrocycleModal'
 import { GenerateMicrocyclesModal } from './GenerateMicrocyclesModal'
-import { SessionModal } from './SessionModal'
 import { BulkSessionModal, type BulkScope } from './BulkSessionModal'
 import { SessionViewModal } from './SessionViewModal'
-import { RegisterSessionModal } from './RegisterSessionModal'
 import { PlanStatsSection } from './PlanStatsSection'
 import { toLocalISODate } from '../../utils/date'
 import './PlanDetailPage.css'
@@ -94,10 +92,6 @@ export function PlanDetailPage() {
   const [activeMacroDates, setActiveMacroDates] = useState<{ start: string; end: string } | null>(null)
   const [activeMacroMicros, setActiveMacroMicros] = useState<MicrocycleResponse[]>([])
 
-  const [sessionModal, setSessionModal] = useState(false)
-  const [editSession, setEditSession] = useState<SessionResponse | null>(null)
-  const [activeMicroId, setActiveMicroId] = useState<number | null>(null)
-
   const [bulkModal, setBulkModal] = useState(false)
   const [bulkScope, setBulkScope] = useState<BulkScope | null>(null)
 
@@ -105,7 +99,6 @@ export function PlanDetailPage() {
   const [generateMacroId, setGenerateMacroId] = useState<number | null>(null)
 
   const [viewSession, setViewSession] = useState<SessionResponse | null>(null)
-  const [registerSession, setRegisterSession] = useState<SessionResponse | null>(null)
 
 
   useEffect(() => {
@@ -183,11 +176,8 @@ export function PlanDetailPage() {
   }
 
   // ---- Session CRUD ----
-  const openEditSession = (s: SessionResponse) => { setEditSession(s); setActiveMicroId(s.microcycleId); setSessionModal(true) }
-
-  const handleSessionSaved = (microId: number, sessions: SessionResponse[]) => {
-    setSessionsMap((m) => ({ ...m, [microId]: sessions }))
-  }
+  const openEditSession = (s: SessionResponse) => navigate(`/plans/${planId}/sessions/${s.id}/edit`)
+  const openRegisterSession = (s: SessionResponse) => navigate(`/plans/${planId}/sessions/${s.id}/register`)
 
   const openBulkCreate = (micro: MicrocycleResponse) => { setBulkScope({ level: 'micro', micro }); setBulkModal(true) }
   const openBulkCreateMacro = (macro: MacrocycleResponse) => {
@@ -334,14 +324,6 @@ export function PlanDetailPage() {
         onGenerated={refreshPlan}
       />
 
-      <SessionModal
-        open={sessionModal}
-        microId={activeMicroId}
-        editSession={editSession}
-        onClose={() => setSessionModal(false)}
-        onSaved={handleSessionSaved}
-      />
-
       <BulkSessionModal
         open={bulkModal}
         scope={bulkScope}
@@ -360,19 +342,7 @@ export function PlanDetailPage() {
         session={viewSession}
         onClose={() => setViewSession(null)}
         onEdit={() => { if (viewSession) openEditSession(viewSession) }}
-        onRegister={() => { if (viewSession) setRegisterSession(viewSession) }}
-      />
-
-
-      <RegisterSessionModal
-        session={registerSession}
-        onClose={() => setRegisterSession(null)}
-        onSaved={async () => {
-          const sessions = await plansApi.getSessions(
-            registerSession!.microcycleId
-          )
-          setSessionsMap(m => ({ ...m, [registerSession!.microcycleId]: sessions }))
-        }}
+        onRegister={() => { if (viewSession) openRegisterSession(viewSession) }}
       />
 
     </div>

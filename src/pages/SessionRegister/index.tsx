@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import type { SessionResponse } from '../../types'
 import { exerciseLogsApi, type ExerciseLogEntryDto } from '../../api/exerciseLogs'
 import { plansApi } from '../../api/plans'
 import { ExercisePicker } from '../../components/ExercisePicker'
-import './RegisterSessionModal.css'
+import './SessionRegisterPage.css'
 
 const STRENGTH_TYPES = new Set(['STRENGTH', 'HYROX', 'CROSSFIT'])
 
@@ -36,13 +37,16 @@ const emptySet = (n: number, plannedReps?: number, plannedWeightKg?: number): Lo
   completed: false,
 })
 
-interface Props {
-  session: SessionResponse | null
-  onClose: () => void
-  onSaved: (sessionId: number) => void
-}
+export function SessionRegisterPage() {
+  const { id: planIdParam, sessionId: sessionIdParam } = useParams<{ id: string; sessionId: string }>()
+  const planId = Number(planIdParam)
+  const sessionId = Number(sessionIdParam)
+  const navigate = useNavigate()
+  const goBack = () => navigate(`/plans/${planId}`)
 
-export function RegisterSessionModal({ session, onClose, onSaved }: Props) {
+  const [session, setSession] = useState<SessionResponse | null>(null)
+  const [loadingSession, setLoadingSession] = useState(true)
+
   const [exercises, setExercises] = useState<LogExercise[]>([])
   const [duration, setDuration] = useState('')
   const [distance, setDistance] = useState('')
@@ -52,6 +56,13 @@ export function RegisterSessionModal({ session, onClose, onSaved }: Props) {
   const [saving, setSaving] = useState(false)
 
   const isStrength = session ? STRENGTH_TYPES.has(session.workoutType) : false
+  const isSwim = session?.workoutType === 'SWIM'
+  const hasSwimPlan = isSwim && (session?.warmUp || session?.mainSet || session?.coolDown || session?.notes)
+
+  useEffect(() => {
+    setLoadingSession(true)
+    plansApi.getSession(sessionId).then(setSession).finally(() => setLoadingSession(false))
+  }, [sessionId])
 
   useEffect(() => {
     if (!session) return
@@ -115,8 +126,6 @@ export function RegisterSessionModal({ session, onClose, onSaved }: Props) {
     })
   }, [session])
 
-  if (!session) return null
-
   // ---- Handlers ----
 
   const updateSet = (exIdx: number, setKey: number, field: 'actualReps' | 'actualWeightKg' | 'completed', value: string | boolean) =>
@@ -158,6 +167,7 @@ export function RegisterSessionModal({ session, onClose, onSaved }: Props) {
   // ---- Save ----
 
   const handleSave = async () => {
+    if (!session) return
     if (isStrength) {
       // Rows without a resolved catalog exerciseId can't be saved as exercise logs — the backend
       // rejects them and, historically, they were silently dropped instead. Block instead of losing data.
@@ -234,8 +244,7 @@ export function RegisterSessionModal({ session, onClose, onSaved }: Props) {
         }
       }
 
-      onSaved(session.id)
-      onClose()
+      goBack()
     } catch (err) {
       console.error(err)
       alert('Erro ao guardar o treino. As cargas dos exercícios podem não ter sido guardadas — tenta novamente.')
@@ -246,166 +255,201 @@ export function RegisterSessionModal({ session, onClose, onSaved }: Props) {
 
   // ---- Render ----
 
+  if (loadingSession || !session) {
+    return (
+      <div className="rsp-loading">
+        <div className="rsp-spinner" />
+      </div>
+    )
+  }
+
   return (
-    <div className="rsm-overlay" onClick={onClose}>
-      <div className="rsm-modal" onClick={e => e.stopPropagation()}>
-
-        <div className="rsm-header">
-          <div>
-            <h2 className="rsm-title">Registar treino</h2>
-            <p className="rsm-subtitle">{session.title} · {new Date(session.date).toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
-          </div>
-          <button className="rsm-close" onClick={onClose}>
-            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+    <div className="rsp-page">
+      <div className="rsp-header">
+        <button onClick={goBack} className="rsp-back-btn" aria-label="Voltar">
+          <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+        </button>
+        <div>
+          <h1 className="rsp-title">Registar treino</h1>
+          <p className="rsp-subtitle">{session.title} · {new Date(session.date).toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
         </div>
+      </div>
 
-        <div className="rsm-body">
+      <div className="rsp-body">
 
-          {/* Strength: exercise logs */}
-          {isStrength && (
-            <div className="rsm-exercises">
-              {exercises.map((ex, exIdx) => (
-                <div key={exIdx} className="rsm-exercise">
-                  <div className="rsm-exercise__header">
-                    <div className="rsm-exercise__name-wrap">
-                      <ExercisePicker
-                        name={ex.exerciseName}
-                        onSelect={(exercise) => selectExercise(exIdx, exercise)}
-                        placeholder="Nome do exercício"
-                      />
-                    </div>
-                    {exercises.length > 1 && (
-                      <button className="rsm-exercise__remove" onClick={() => removeExercise(exIdx)} title="Remover exercício">
-                        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    )}
+        {/* Swim planned structure, for reference while logging */}
+        {hasSwimPlan && (
+          <div className="rsp-swim-plan">
+            <p className="rsp-section-label">Treino planeado</p>
+            {session.warmUp && (
+              <div className="rsp-swim-plan__item">
+                <span className="rsp-swim-plan__label">Aquecimento</span>
+                <p>{session.warmUp}</p>
+              </div>
+            )}
+            {session.mainSet && (
+              <div className="rsp-swim-plan__item">
+                <span className="rsp-swim-plan__label">Parte fundamental</span>
+                <p>{session.mainSet}</p>
+              </div>
+            )}
+            {session.coolDown && (
+              <div className="rsp-swim-plan__item">
+                <span className="rsp-swim-plan__label">Retorno à calma</span>
+                <p>{session.coolDown}</p>
+              </div>
+            )}
+            {session.notes && (
+              <div className="rsp-swim-plan__item">
+                <span className="rsp-swim-plan__label">Notas</span>
+                <p>{session.notes}</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Strength: exercise logs */}
+        {isStrength && (
+          <div className="rsp-exercises">
+            {exercises.map((ex, exIdx) => (
+              <div key={exIdx} className="rsp-exercise">
+                <div className="rsp-exercise__header">
+                  <div className="rsp-exercise__name-wrap">
+                    <ExercisePicker
+                      name={ex.exerciseName}
+                      onSelect={(exercise) => selectExercise(exIdx, exercise)}
+                      placeholder="Nome do exercício"
+                    />
                   </div>
-
-                  {/* Sets table */}
-                  <div className="rsm-sets-table">
-                    <div className="rsm-sets-table__head">
-                      <span>#</span>
-                      <span className="rsm-col-plan">Plano</span>
-                      <span>Reps feitas</span>
-                      <span>Peso (kg)</span>
-                      <span></span>
-                    </div>
-
-                    {ex.sets.map(s => (
-                      <div key={s._key} className={`rsm-set-row ${!s.completed ? 'rsm-set-row--failed' : ''}`}>
-                        <span className="rsm-set-num">{s.setNumber}</span>
-
-                        <span className="rsm-col-plan rsm-planned-val">
-                          {s.plannedReps && s.plannedWeightKg
-                            ? `${s.plannedReps} × ${s.plannedWeightKg} kg`
-                            : s.plannedReps
-                              ? `${s.plannedReps} reps`
-                              : '—'}
-                        </span>
-
-                        <input
-                          type="number"
-                          value={s.actualReps ?? ''}
-                          onChange={e => updateSet(exIdx, s._key, 'actualReps', e.target.value)}
-                          placeholder="—"
-                        />
-                        <input
-                          type="number"
-                          step="0.5"
-                          value={s.actualWeightKg ?? ''}
-                          onChange={e => updateSet(exIdx, s._key, 'actualWeightKg', e.target.value)}
-                          placeholder="—"
-                        />
-
-                        <div className="rsm-set-btns">
-                          <button
-                            className={`rsm-done-btn ${s.completed ? 'rsm-done-btn--ok' : 'rsm-done-btn--fail'}`}
-                            onClick={() => updateSet(exIdx, s._key, 'completed', !s.completed)}
-                            title={s.completed ? 'Marcar como não feita' : 'Marcar como feita'}
-                          >
-                            {s.completed ? '✓' : '○'}
-                          </button>
-                          {ex.sets.length > 1 && (
-                            <button className="rsm-remove-set-btn" onClick={() => removeSet(exIdx, s._key)}>
-                              <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-                              </svg>
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="rsm-exercise__footer">
-                    <button className="rsm-add-set-btn" onClick={() => addSet(exIdx)}>
-                      + série
+                  {exercises.length > 1 && (
+                    <button className="rsp-exercise__remove" onClick={() => removeExercise(exIdx)} title="Remover exercício">
+                      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
                     </button>
-                    <div className="rsm-rpe-wrap">
-                      <label>RPE</label>
+                  )}
+                </div>
+
+                {/* Sets table */}
+                <div className="rsp-sets-table">
+                  <div className="rsp-sets-table__head">
+                    <span>#</span>
+                    <span className="rsp-col-plan">Plano</span>
+                    <span>Reps feitas</span>
+                    <span>Peso (kg)</span>
+                    <span></span>
+                  </div>
+
+                  {ex.sets.map(s => (
+                    <div key={s._key} className={`rsp-set-row ${!s.completed ? 'rsp-set-row--failed' : ''}`}>
+                      <span className="rsp-set-num">{s.setNumber}</span>
+
+                      <span className="rsp-col-plan rsp-planned-val">
+                        {s.plannedReps && s.plannedWeightKg
+                          ? `${s.plannedReps} × ${s.plannedWeightKg} kg`
+                          : s.plannedReps
+                            ? `${s.plannedReps} reps`
+                            : '—'}
+                      </span>
+
                       <input
                         type="number"
-                        min="1" max="10" step="0.5"
-                        value={ex.rpe ?? ''}
-                        onChange={e => updateExercise(exIdx, 'rpe', e.target.value === '' ? '' : Number(e.target.value))}
+                        value={s.actualReps ?? ''}
+                        onChange={e => updateSet(exIdx, s._key, 'actualReps', e.target.value)}
                         placeholder="—"
                       />
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={s.actualWeightKg ?? ''}
+                        onChange={e => updateSet(exIdx, s._key, 'actualWeightKg', e.target.value)}
+                        placeholder="—"
+                      />
+
+                      <div className="rsp-set-btns">
+                        <button
+                          className={`rsp-done-btn ${s.completed ? 'rsp-done-btn--ok' : 'rsp-done-btn--fail'}`}
+                          onClick={() => updateSet(exIdx, s._key, 'completed', !s.completed)}
+                          title={s.completed ? 'Marcar como não feita' : 'Marcar como feita'}
+                        >
+                          {s.completed ? '✓' : '○'}
+                        </button>
+                        {ex.sets.length > 1 && (
+                          <button className="rsp-remove-set-btn" onClick={() => removeSet(exIdx, s._key)}>
+                            <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
                     </div>
+                  ))}
+                </div>
+
+                <div className="rsp-exercise__footer">
+                  <button className="rsp-add-set-btn" onClick={() => addSet(exIdx)}>
+                    + série
+                  </button>
+                  <div className="rsp-rpe-wrap">
+                    <label>RPE</label>
+                    <input
+                      type="number"
+                      min="1" max="10" step="0.5"
+                      value={ex.rpe ?? ''}
+                      onChange={e => updateExercise(exIdx, 'rpe', e.target.value === '' ? '' : Number(e.target.value))}
+                      placeholder="—"
+                    />
                   </div>
                 </div>
-              ))}
-
-              <button className="rsm-add-exercise-btn" onClick={addExercise}>
-                + Adicionar exercício
-              </button>
-            </div>
-          )}
-
-          {/* General: duration, distance, HR, notes */}
-          <div className="rsm-general">
-            <p className="rsm-section-label">Geral</p>
-            <div className="rsm-general-grid">
-              <div className="rsm-field">
-                <label>Duração (min)</label>
-                <input type="number" value={duration} onChange={e => setDuration(e.target.value)} placeholder={session.plannedDurationMinutes?.toString() ?? '—'} />
               </div>
-              {!isStrength && (
-                <div className="rsm-field">
-                  <label>Distância (km)</label>
-                  <input type="number" step="0.1" value={distance} onChange={e => setDistance(e.target.value)} placeholder={session.plannedDistanceKm?.toString() ?? '—'} />
-                </div>
-              )}
-              <div className="rsm-field">
-                <label>FC média (bpm)</label>
-                <input type="number" value={heartRate} onChange={e => setHeartRate(e.target.value)} placeholder="—" />
-              </div>
-              {!isStrength && (
-                <div className="rsm-field">
-                  <label>RPE (1–10)</label>
-                  <input type="number" min="1" max="10" value={rpe} onChange={e => setRpe(e.target.value)} placeholder="—" />
-                </div>
-              )}
-            </div>
-            <div className="rsm-field">
-              <label>Notas</label>
-              <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2} placeholder="Como correu o treino?" />
-            </div>
+            ))}
+
+            <button className="rsp-add-exercise-btn" onClick={addExercise}>
+              + Adicionar exercício
+            </button>
           </div>
+        )}
 
+        {/* General: duration, distance, HR, notes */}
+        <div className="rsp-general">
+          <p className="rsp-section-label">Geral</p>
+          <div className="rsp-general-grid">
+            <div className="rsp-field">
+              <label>Duração (min)</label>
+              <input type="number" value={duration} onChange={e => setDuration(e.target.value)} placeholder={session.plannedDurationMinutes?.toString() ?? '—'} />
+            </div>
+            {!isStrength && (
+              <div className="rsp-field">
+                <label>Distância (km)</label>
+                <input type="number" step="0.1" value={distance} onChange={e => setDistance(e.target.value)} placeholder={session.plannedDistanceKm?.toString() ?? '—'} />
+              </div>
+            )}
+            <div className="rsp-field">
+              <label>FC média (bpm)</label>
+              <input type="number" value={heartRate} onChange={e => setHeartRate(e.target.value)} placeholder="—" />
+            </div>
+            {!isStrength && (
+              <div className="rsp-field">
+                <label>RPE (1–10)</label>
+                <input type="number" min="1" max="10" value={rpe} onChange={e => setRpe(e.target.value)} placeholder="—" />
+              </div>
+            )}
+          </div>
+          <div className="rsp-field">
+            <label>Notas</label>
+            <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2} placeholder="Como correu o treino?" />
+          </div>
         </div>
 
-        <div className="rsm-footer">
-          <button className="rsm-btn rsm-btn--secondary" onClick={onClose}>Cancelar</button>
-          <button className="rsm-btn rsm-btn--primary" onClick={handleSave} disabled={saving}>
-            {saving ? 'A guardar...' : 'Guardar treino'}
-          </button>
-        </div>
+      </div>
 
+      <div className="rsp-footer">
+        <button className="rsp-btn rsp-btn--secondary" onClick={goBack}>Cancelar</button>
+        <button className="rsp-btn rsp-btn--primary" onClick={handleSave} disabled={saving}>
+          {saving ? 'A guardar...' : 'Guardar treino'}
+        </button>
       </div>
     </div>
   )
