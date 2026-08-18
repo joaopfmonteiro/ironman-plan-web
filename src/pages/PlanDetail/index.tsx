@@ -12,7 +12,6 @@ import { Badge } from '../../components/ui/Badge'
 import { MacrocycleModal } from './MacrocycleModal'
 import { MicrocycleModal } from './MicrocycleModal'
 import { GenerateMicrocyclesModal } from './GenerateMicrocyclesModal'
-import { BulkSessionModal, type BulkScope } from './BulkSessionModal'
 import { SessionViewModal } from './SessionViewModal'
 import { PlanStatsSection } from './PlanStatsSection'
 import { toLocalISODate } from '../../utils/date'
@@ -91,9 +90,6 @@ export function PlanDetailPage() {
   const [activeMacroId, setActiveMacroId] = useState<number | null>(null)
   const [activeMacroDates, setActiveMacroDates] = useState<{ start: string; end: string } | null>(null)
   const [activeMacroMicros, setActiveMacroMicros] = useState<MicrocycleResponse[]>([])
-
-  const [bulkModal, setBulkModal] = useState(false)
-  const [bulkScope, setBulkScope] = useState<BulkScope | null>(null)
 
   const [generateModal, setGenerateModal] = useState(false)
   const [generateMacroId, setGenerateMacroId] = useState<number | null>(null)
@@ -179,31 +175,9 @@ export function PlanDetailPage() {
   const openEditSession = (s: SessionResponse) => navigate(`/plans/${planId}/sessions/${s.id}/edit`)
   const openRegisterSession = (s: SessionResponse) => navigate(`/plans/${planId}/sessions/${s.id}/register`)
 
-  const openBulkCreate = (micro: MicrocycleResponse) => { setBulkScope({ level: 'micro', micro }); setBulkModal(true) }
-  const openBulkCreateMacro = (macro: MacrocycleResponse) => {
-    setBulkScope({
-      level: 'macro',
-      macroId: macro.id,
-      macroName: macro.name,
-      macroStartDate: macro.startDate,
-      macroEndDate: macro.endDate,
-      microcycles: macro.microcycles,
-    })
-    setBulkModal(true)
-  }
+  const openBulkCreate = (micro: MicrocycleResponse) => navigate(`/plans/${planId}/sessions/new?microId=${micro.id}`)
+  const openBulkCreateMacro = (macro: MacrocycleResponse) => navigate(`/plans/${planId}/sessions/new?macroId=${macro.id}`)
   const openGenerateMicros = (macroId: number) => { setGenerateMacroId(macroId); setGenerateModal(true) }
-
-  const handleBulkCreated = async (microIds: number[]) => {
-    const entries = await Promise.all(
-      microIds.map(async (mid) => [mid, await plansApi.getSessions(mid)] as const)
-    )
-    setSessionsMap((m) => {
-      const nm = { ...m }
-      for (const [mid, sessions] of entries) nm[mid] = sessions
-      return nm
-    })
-    refreshPlan()
-  }
 
   const deleteSession = async (s: SessionResponse) => {
     if (!confirm('Eliminar sessão?')) return
@@ -322,20 +296,6 @@ export function PlanDetailPage() {
         macroId={generateMacroId}
         onClose={() => setGenerateModal(false)}
         onGenerated={refreshPlan}
-      />
-
-      <BulkSessionModal
-        open={bulkModal}
-        scope={bulkScope}
-        existingSessions={
-          !bulkScope
-            ? []
-            : bulkScope.level === 'micro'
-              ? sessionsMap[bulkScope.micro.id] ?? []
-              : bulkScope.microcycles.flatMap((m) => sessionsMap[m.id] ?? [])
-        }
-        onClose={() => setBulkModal(false)}
-        onCreated={handleBulkCreated}
       />
 
       <SessionViewModal

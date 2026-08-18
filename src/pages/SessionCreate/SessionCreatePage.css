@@ -1,0 +1,160 @@
+.scp-page {
+  max-width: 44rem;
+}
+
+.scp-calendar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+}
+
+.scp-cal-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #0f172a;
+  text-transform: capitalize;
+}
+
+.scp-cal-range {
+  font-weight: 400;
+  color: #94a3b8;
+}
+
+.scp-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.3rem;
+}
+
+.scp-cal-day-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-align: center;
+  padding: 0.2rem 0;
+}
+
+.scp-cal-cell {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  background: #fff;
+  transition: background 0.15s, color 0.15s;
+  position: relative;
+  gap: 0.15rem;
+  font-family: inherit;
+}
+
+.scp-cal-cell:hover { background: #fed7aa; }
+
+.scp-cal-cell--empty {
+  background: transparent;
+  cursor: default;
+  pointer-events: none;
+}
+
+.scp-cal-cell--selected {
+  background: #f97316;
+  color: #fff;
+}
+
+.scp-cal-cell--selected:hover { background: #ea6c0a; }
+
+.scp-cal-cell--has-session { background: #e0f2fe; }
+.scp-cal-cell--has-session:hover { background: #bae6fd; }
+.scp-cal-cell--has-session.scp-cal-cell--selected { background: #f97316; }
+
+.scp-cal-cell--disabled {
+  background: transparent;
+  color: #e2e8f0;
+  cursor: not-allowed;
+}
+.scp-cal-cell--disabled:hover { background: transparent; }
+
+.scp-cal-empty {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  text-align: center;
+  padding: 1rem 0.5rem;
+}
+
+.scp-cal-num {
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.scp-cal-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #0ea5e9;
+  flex-shrink: 0;
+}
+
+.scp-cal-cell--selected .scp-cal-dot { background: rgba(255,255,255,0.7); }
+
+.scp-cal-legend {
+  display: flex;
+  gap: 0.875rem;
+  flex-wrap: wrap;
+}
+
+.scp-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  color: #64748b;
+}
+
+.scp-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.scp-legend-dot--session { background: #0ea5e9; }
+.scp-legend-dot--selected { background: #f97316; }
+.scp-legend-dot--disabled { background: #e2e8f0; }
+
+.scp-selected-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.scp-selected-tag {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  background: #fff7ed;
+  color: #c2410c;
+  border: 1px solid #fed7aa;
+  border-radius: 0.375rem;
+  padding: 0.2rem 0.4rem 0.2rem 0.5rem;
+}
+
+.scp-selected-tag button {
+  border: none;
+  background: none;
+  color: #fb923c;
+  cursor: pointer;
+  font-size: 0.85rem;
+  line-height: 1;
+  padding: 0;
+  font-family: inherit;
+}
+
+.scp-selected-tag button:hover { color: #c2410c; }

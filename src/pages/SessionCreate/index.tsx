@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { plansApi } from '../../api/plans'
 import { workoutTemplatesApi } from '../../api/workoutTemplates'
-import type { SessionExercise, SessionResponse, WorkoutTemplate } from '../../types'
+import type { MicrocycleResponse, SessionExercise, SessionResponse, WorkoutTemplate } from '../../types'
 import { toLocalISODate } from '../../utils/date'
 import { ExercisePicker } from '../../components/ExercisePicker'
 import { RmHint } from '../../components/RmHint'
 import type { StrengthSuggestion } from '../../utils/strengthScheme'
-import './SessionFormPage.css'
+import '../SessionForm/SessionFormPage.css'
+import './SessionCreatePage.css'
 
 const WORKOUT_TYPES = [
   { value: 'SWIM',     label: '🏊 Natação' },
@@ -44,13 +45,14 @@ const INTENSITY_ZONES = [
   { value: 'Z5', label: 'Z5 — Anaeróbico' },
 ]
 
+const DAY_LABELS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
+
 const ENDURANCE_TYPES = new Set(['SWIM', 'BIKE', 'RUN', 'BRICK'])
 const STRENGTH_WORKOUT_TYPES = new Set(['STRENGTH', 'HYROX', 'CROSSFIT'])
 
-const today = () => toLocalISODate()
 const emptyExercise = (): SessionExercise => ({ exerciseId: undefined, name: '', sets: undefined, reps: undefined, weightKg: undefined })
 const emptyForm = () => ({
-  date: today(), workoutType: 'RUN', title: '', description: '',
+  workoutType: 'RUN', title: '', description: '',
   warmUp: '', mainSet: '', coolDown: '', notes: '',
   plannedDurationMinutes: '', plannedDistanceKm: '', intensityZone: '', strengthType: '',
 })
@@ -60,18 +62,62 @@ const emptyForm = () => ({
 const findUnmatchedExerciseIdx = (exercises: SessionExercise[]) =>
   exercises.findIndex(ex => ex.exerciseId === undefined && (ex.sets !== undefined || ex.reps !== undefined || ex.weightKg !== undefined))
 
-export function SessionFormPage() {
-  const { id: planIdParam, sessionId: sessionIdParam } = useParams<{ id: string; sessionId: string }>()
+/** Day-of-week index Monday=0 … Sunday=6 */
+const dow = (d: Date) => (d.getDay() + 6) % 7
+
+/** All days in [startISO, endISO] inclusive */
+function daysInRange(startISO: string, endISO: string): Date[] {
+  const result: Date[] = []
+  const cur = new Date(startISO + 'T00:00:00')
+  const end = new Date(endISO + 'T00:00:00')
+  while (cur <= end) {
+    result.push(new Date(cur))
+    cur.setDate(cur.getDate() + 1)
+  }
+  return result
+}
+
+/** Group days into week rows (Mon=0..Sun=6), padding with nulls */
+function toWeeks(days: Date[]): (Date | null)[][] {
+  if (!days.length) return []
+  const weeks: (Date | null)[][] = []
+  let week: (Date | null)[] = Array(dow(days[0])).fill(null)
+  for (const d of days) {
+    week.push(d)
+    if (week.length === 7) { weeks.push(week); week = [] }
+  }
+  if (week.length) {
+    while (week.length < 7) week.push(null)
+    weeks.push(week)
+  }
+  return weeks
+}
+
+interface Scope {
+  isMacro: boolean
+  macroName?: string
+  rangeStart: string
+  rangeEnd: string
+  microsInScope: MicrocycleResponse[]
+}
+
+export function SessionCreatePage() {
+  const { id: planIdParam } = useParams<{ id: string }>()
   const planId = Number(planIdParam)
-  const sessionId = Number(sessionIdParam)
+  const [searchParams] = useSearchParams()
+  const microIdParam = searchParams.get('microId')
+  const macroIdParam = searchParams.get('macroId')
   const navigate = useNavigate()
   const goBack = () => navigate(`/plans/${planId}`)
 
-  const [editSession, setEditSession] = useState<SessionResponse | null>(null)
-  const [loadingSession, setLoadingSession] = useState(true)
+  const [scope, setScope] = useState<Scope | null>(null)
+  const [existingSessions, setExistingSessions] = useState<SessionResponse[]>([])
+  const [loadingScope, setLoadingScope] = useState(true)
+  const [notFound, setNotFound] = useState(false)
 
   const [form, setForm] = useState(emptyForm())
   const [exercises, setExercises] = useState<SessionExercise[]>([emptyExercise()])
+  const [selectedDays, setSelectedDays] = useState<Set<string>>(new Set())
   const [saving, setSaving] = useState(false)
 
   // Template state
@@ -87,28 +133,37 @@ export function SessionFormPage() {
   }, [])
 
   useEffect(() => {
-    setLoadingSession(true)
-    plansApi.getSession(sessionId)
-      .then((s) => {
-        setEditSession(s)
-        setForm({
-          date: s.date,
-          workoutType: s.workoutType,
-          title: s.title,
-          description: s.description || '',
-          warmUp: s.warmUp || '',
-          mainSet: s.mainSet || '',
-          coolDown: s.coolDown || '',
-          notes: s.notes || '',
-          plannedDurationMinutes: s.plannedDurationMinutes?.toString() || '',
-          plannedDistanceKm: s.plannedDistanceKm?.toString() || '',
-          intensityZone: s.intensityZone || '',
-          strengthType: s.strengthType || '',
+    setLoadingScope(true)
+    plansApi.get(planId).then(async (plan) => {
+      if (macroIdParam) {
+        const macroId = Number(macroIdParam)
+        const macro = plan.macrocycles.find((m) => m.id === macroId)
+        if (!macro) { setNotFound(true); return }
+        setScope({
+          isMacro: true,
+          macroName: macro.name,
+          rangeStart: macro.startDate,
+          rangeEnd: macro.endDate,
+          microsInScope: macro.microcycles,
         })
-        setExercises(s.exercises?.length ? s.exercises : [emptyExercise()])
-      })
-      .finally(() => setLoadingSession(false))
-  }, [sessionId])
+        const lists = await Promise.all(macro.microcycles.map((m) => plansApi.getSessions(m.id)))
+        setExistingSessions(lists.flat())
+      } else if (microIdParam) {
+        const microId = Number(microIdParam)
+        const micro = plan.macrocycles.flatMap((m) => m.microcycles).find((m) => m.id === microId)
+        if (!micro) { setNotFound(true); return }
+        setScope({
+          isMacro: false,
+          rangeStart: micro.startDate,
+          rangeEnd: micro.endDate,
+          microsInScope: [micro],
+        })
+        setExistingSessions(await plansApi.getSessions(micro.id))
+      } else {
+        setNotFound(true)
+      }
+    }).finally(() => setLoadingScope(false))
+  }, [planId, microIdParam, macroIdParam])
 
   // Close template dropdown on outside click
   useEffect(() => {
@@ -129,6 +184,20 @@ export function SessionFormPage() {
   const setF = (field: string) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
       setForm((f) => ({ ...f, [field]: e.target.value }))
+
+  const existingDates = new Set(existingSessions.map((s) => s.date))
+  const days = scope ? daysInRange(scope.rangeStart, scope.rangeEnd) : []
+  const weeks = toWeeks(days)
+  const microForDate = (iso: string) => scope?.microsInScope.find((m) => iso >= m.startDate && iso <= m.endDate)
+
+  const toggleDay = (iso: string) => {
+    if (!microForDate(iso)) return
+    setSelectedDays((prev) => {
+      const next = new Set(prev)
+      next.has(iso) ? next.delete(iso) : next.add(iso)
+      return next
+    })
+  }
 
   const applyTemplate = (t: WorkoutTemplate) => {
     setForm((f) => ({
@@ -202,8 +271,18 @@ export function SessionFormPage() {
   const addEx = () => setExercises((prev) => [...prev, emptyExercise()])
   const removeEx = (i: number) => setExercises((prev) => prev.filter((_, idx) => idx !== i))
 
-  const handleSave = async (e: React.FormEvent) => {
+  const dayLabel = (d: Date) => d.getDate()
+  const rangeLabel = () => {
+    if (!scope) return ''
+    const fmt = (iso: string) => new Date(iso + 'T00:00:00').toLocaleDateString('pt-PT', { month: 'short', year: 'numeric' })
+    const startLabel = fmt(scope.rangeStart)
+    const endLabel = fmt(scope.rangeEnd)
+    return startLabel === endLabel ? startLabel : `${startLabel} → ${endLabel}`
+  }
+
+  const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!scope || !selectedDays.size || !form.title) return
     if (isStrength) {
       const idx = findUnmatchedExerciseIdx(exercises)
       if (idx !== -1) {
@@ -211,21 +290,17 @@ export function SessionFormPage() {
         return
       }
     }
-    if (!editSession) return
     setSaving(true)
     try {
       const payload = {
-        date: form.date,
+        dates: Array.from(selectedDays).sort(),
         workoutType: form.workoutType,
         title: form.title,
-        // Fields belonging to the "other" layout are actively cleared (not just omitted) so
-        // switching a session's type away from SWIM — or into it — can't leave orphaned data
-        // from the previous layout sitting invisibly in the DB.
-        description: isSwim ? '' : (form.description || undefined),
-        warmUp: isSwim ? (form.warmUp || undefined) : '',
-        mainSet: isSwim ? (form.mainSet || undefined) : '',
-        coolDown: isSwim ? (form.coolDown || undefined) : '',
-        notes: isSwim ? (form.notes || undefined) : '',
+        description: isSwim ? undefined : (form.description || undefined),
+        warmUp: isSwim ? (form.warmUp || undefined) : undefined,
+        mainSet: isSwim ? (form.mainSet || undefined) : undefined,
+        coolDown: isSwim ? (form.coolDown || undefined) : undefined,
+        notes: isSwim ? (form.notes || undefined) : undefined,
         plannedDurationMinutes: form.plannedDurationMinutes ? Number(form.plannedDurationMinutes) : undefined,
         plannedDistanceKm: form.plannedDistanceKm ? Number(form.plannedDistanceKm) : undefined,
         intensityZone: form.intensityZone || undefined,
@@ -234,14 +309,23 @@ export function SessionFormPage() {
           ? exercises.filter((ex): ex is SessionExercise & { exerciseId: number } => ex.exerciseId !== undefined)
           : [],
       }
-      await plansApi.updateSession(editSession.id, payload)
+      if (scope.isMacro) {
+        const macroId = Number(macroIdParam)
+        const res = await plansApi.bulkCreateSessionsForMacro(macroId, payload)
+        if (res.skippedDates.length > 0) {
+          alert(`${res.skippedDates.length} data(s) ignorada(s) por não estarem dentro de nenhuma semana criada.`)
+        }
+      } else {
+        const microId = Number(microIdParam)
+        await plansApi.bulkCreateSessions(microId, payload)
+      }
       goBack()
     } finally {
       setSaving(false)
     }
   }
 
-  if (loadingSession) {
+  if (loadingScope) {
     return (
       <div className="sfp-loading">
         <div className="sfp-spinner" />
@@ -249,15 +333,24 @@ export function SessionFormPage() {
     )
   }
 
+  if (notFound || !scope) {
+    return (
+      <div className="sfp-page">
+        <p>Semana ou macrociclo não encontrado.</p>
+        <button className="sfp-btn sfp-btn--secondary" onClick={goBack}>Voltar</button>
+      </div>
+    )
+  }
+
   return (
-    <div className="sfp-page">
+    <div className="sfp-page scp-page">
       <div className="sfp-header">
         <button onClick={goBack} className="sfp-back-btn" aria-label="Voltar">
           <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
         </button>
-        <h1 className="sfp-title">Editar Sessão</h1>
+        <h1 className="sfp-title">{scope.isMacro ? `Repetir sessão — ${scope.macroName}` : 'Nova Sessão'}</h1>
 
         {/* Template loader */}
         <div className="sfp-tpl-wrap" ref={templateDropRef}>
@@ -297,21 +390,14 @@ export function SessionFormPage() {
         </div>
       </div>
 
-      <form onSubmit={handleSave} className="sfp-form">
-        {/* Row 1: data + tipo */}
-        <div className="sfp-row">
-          <div className="sfp-field">
-            <label className="sfp-label">Data *</label>
-            <input type="date" className="sfp-input" value={form.date} onChange={setF('date')} required />
-          </div>
-          <div className="sfp-field">
-            <label className="sfp-label">Tipo de treino</label>
-            <select className="sfp-input sfp-select" value={form.workoutType} onChange={setF('workoutType')}>
-              {WORKOUT_TYPES.map((t) => (
-                <option key={t.value} value={t.value}>{t.label}</option>
-              ))}
-            </select>
-          </div>
+      <form onSubmit={handleCreate} className="sfp-form">
+        <div className="sfp-field">
+          <label className="sfp-label">Tipo de treino</label>
+          <select className="sfp-input sfp-select" value={form.workoutType} onChange={setF('workoutType')}>
+            {WORKOUT_TYPES.map((t) => (
+              <option key={t.value} value={t.value}>{t.label}</option>
+            ))}
+          </select>
         </div>
 
         <div className="sfp-field">
@@ -475,10 +561,81 @@ export function SessionFormPage() {
           </div>
         )}
 
+        {/* Calendar day picker */}
+        <div className="scp-calendar">
+          <p className="sfp-label">Dias *</p>
+          <div className="scp-cal-title">
+            {rangeLabel()}
+            {!scope.isMacro && <span className="scp-cal-range"> · Sem {scope.microsInScope[0]?.weekNumber}</span>}
+          </div>
+
+          {scope.microsInScope.length === 0 ? (
+            <p className="scp-cal-empty">Ainda não há semanas criadas neste macrociclo. Gera semanas primeiro.</p>
+          ) : (
+            <>
+              <div className="scp-cal-grid">
+                {DAY_LABELS.map((l) => (
+                  <div key={l} className="scp-cal-day-label">{l}</div>
+                ))}
+                {weeks.map((week, wi) =>
+                  week.map((day, di) => {
+                    if (!day) return <div key={`e-${wi}-${di}`} className="scp-cal-cell scp-cal-cell--empty" />
+                    const iso = toLocalISODate(day)
+                    const inScope = !!microForDate(iso)
+                    const selected = selectedDays.has(iso)
+                    const hasSession = existingDates.has(iso)
+                    return (
+                      <button
+                        key={iso}
+                        type="button"
+                        className={`scp-cal-cell ${selected ? 'scp-cal-cell--selected' : ''} ${hasSession ? 'scp-cal-cell--has-session' : ''} ${!inScope ? 'scp-cal-cell--disabled' : ''}`}
+                        onClick={() => toggleDay(iso)}
+                        disabled={!inScope}
+                        title={!inScope ? 'Cria a semana primeiro' : hasSession ? 'Já tem sessão' : undefined}
+                      >
+                        <span className="scp-cal-num">{dayLabel(day)}</span>
+                        {hasSession && <span className="scp-cal-dot" />}
+                      </button>
+                    )
+                  })
+                )}
+              </div>
+
+              <div className="scp-cal-legend">
+                <span className="scp-legend-item">
+                  <span className="scp-legend-dot scp-legend-dot--session" />
+                  Sessão existente
+                </span>
+                <span className="scp-legend-item">
+                  <span className="scp-legend-dot scp-legend-dot--selected" />
+                  Selecionado
+                </span>
+                {scope.isMacro && (
+                  <span className="scp-legend-item">
+                    <span className="scp-legend-dot scp-legend-dot--disabled" />
+                    Sem semana criada
+                  </span>
+                )}
+              </div>
+            </>
+          )}
+
+          {selectedDays.size > 0 && (
+            <div className="scp-selected-preview">
+              {Array.from(selectedDays).sort().map((iso) => (
+                <span key={iso} className="scp-selected-tag">
+                  {new Date(iso + 'T00:00:00').toLocaleDateString('pt-PT', { weekday: 'short', day: 'numeric', month: 'short' })}
+                  <button type="button" onClick={() => toggleDay(iso)}>×</button>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
         <div className="sfp-actions">
           <button type="button" className="sfp-btn sfp-btn--secondary" onClick={goBack}>Cancelar</button>
-          <button type="submit" className="sfp-btn sfp-btn--primary" disabled={saving}>
-            {saving ? 'A guardar...' : 'Guardar'}
+          <button type="submit" className="sfp-btn sfp-btn--primary" disabled={saving || !selectedDays.size || !form.title}>
+            {saving ? 'A criar...' : `Criar ${selectedDays.size || ''} sessão${selectedDays.size !== 1 ? 'ões' : ''}`}
           </button>
         </div>
       </form>
